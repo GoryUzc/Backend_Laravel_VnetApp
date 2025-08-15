@@ -18,7 +18,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'aradial_id',
         'name',
+        'last_name',
+        'document',
+        'document_type',
+        'phone',
+        'branch',
+        'role',
         'email',
         'password',
     ];
@@ -32,7 +39,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
     /**
      * Get the attributes that should be cast.
      *
@@ -45,4 +51,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+     /*public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+  public function getJWTCustomClaims()
+    {
+        return [];
+    }*/
 }

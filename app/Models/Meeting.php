@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
+use App\Models\User;
+use App\Models\ProspectAradial;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+
+class Meeting extends Model {
+    use HasFactory, Notifiable;
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var arrays
+     */
+    protected $fillable = [
+        'prospect_aradial_id',
+        'user_id',
+        'date_time1',
+        'date_time2',
+        'status',
+        'latitude',
+        'longitude',
+    ];
+    /**
+     * The attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected  $casts = [
+
+            'date_time1' => 'datetime',
+            'date_time2' => 'datetime',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+        ];
+
+     /**
+     * Relación: Una reunión pertenece a un usuario.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+        
+    }
+    /**
+     * Relacion: Una reunión pertenece a un prospecto Aradial.
+     */
+    public function prospectAradial(): BelongsTo
+    {
+        return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
+    }
+}

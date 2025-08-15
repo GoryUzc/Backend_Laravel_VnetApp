@@ -43,6 +43,8 @@ class InstallationOrder extends Model
         'mac_ont',
         'serial_ont',
         'puerto_nap',
+        'ppoe_user',
+        'ppoe_password',
         'ubicacion_onu',
         'nro_equipos_conectar',
         'puerto_olt',
@@ -67,7 +69,9 @@ class InstallationOrder extends Model
         'canaletas' => 'integer',
         'ramplug' => 'integer',
         'cable_drop' => 'integer',
-        'hilos' => 'integer'
+        'hilos' => 'integer',
+        'ppoe_user' => 'string',
+        'ppoe_password' => 'string',
     ];
 
     /**

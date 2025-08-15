@@ -45,8 +45,6 @@ class ProspectAradial extends Model
         'address',
         'city',
         'email',
-        'ppoe_user',
-        'ppoe_password',
         'plan',
         'status_red',
     ];
@@ -59,7 +57,5 @@ class ProspectAradial extends Model
 
             'phone' => 'string',
             'email' => 'string',
-            'ppoe_user' => 'string',
-            'ppoe_password' => 'string',
         ];
 }

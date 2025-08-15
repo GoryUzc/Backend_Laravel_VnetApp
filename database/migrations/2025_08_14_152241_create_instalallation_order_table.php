@@ -31,6 +31,8 @@ return new class extends Migration
             $table->string('mac_ont');
             $table->string('serial_ont');
             $table->string('puerto_nap');
+            $table->string('ppoe_user')->unique();
+            $table->string('ppoe_password')->unique();
             $table->string('ubicacion_onu');
             $table->string('nro_equipos_conectar');
             $table->string('puerto_olt');

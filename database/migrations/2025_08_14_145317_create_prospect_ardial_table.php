@@ -22,8 +22,6 @@ return new class extends Migration
             $table->string('address');
             $table->string('city');
             $table->string('email')->unique();
-            $table->string('ppoe_user')->unique();
-            $table->string('ppoe_password');
             $table->string('plan');
             $table->string('status_red')->default('inactivo');
             $table->timestamps();    

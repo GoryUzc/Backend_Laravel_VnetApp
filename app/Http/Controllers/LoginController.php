@@ -10,7 +10,7 @@ use Firebase\JWT\Key;
 use Illuminate\Support\Facades\Hash;
 
 
-class Login extends Controller
+class LoginController extends Controller
 {
         public function login(Request $request)
     {
@@ -25,17 +25,33 @@ class Login extends Controller
             'sub' => $user->id,     // ID de usuario
             'iat' => time(),        // Tiempo de emisión
             'exp' => time() + 60*60 ,// Expira en 1 hora
-            'username' => "Gregory"
+            'name' => $user->name,  // Nombre del usuario
+            'role' => $user->role, // Rol del usuario
          ];
 
-        $jwt = JWT::encode($payload, env('JWT_SECRET'), 'HS256');
+        try {
+             $jwt = JWT::encode($payload, env('JWT_SECRET'), 'HS256');
 
         return response()->json(['token' => $jwt]);
+    } catch (\Exception $e) {
+            \Log::error('Error al generar token JWT: ' . $e->getMessage());
+            return response()->json(['error' => 'Error interno del servidor'], 500);
     }
+}
     
     public function register() {
         $validator = Validator::make(request()->all(), [
             'name' => 'required',
+            'last_name' => 'required',
+            'document' => 'required|unique:users',
+            'document_type' => 'required',
+            'phone' => 'required',
+            'branch' => 'required',
+            'role' => [
+                'required',
+                'string',
+                'in:admin,contractor,supervisor'
+            ],
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
         ]);
@@ -46,6 +62,12 @@ class Login extends Controller
   
         $user = new User;
         $user->name = request()->name;
+        $user->last_name = request()->last_name;
+        $user->document = request()->document;
+        $user->document_type = request()->document_type;
+        $user->phone = request()->phone;
+        $user->branch = request()->branch;
+        $user->role = request()->role;
         $user->email = request()->email;
         $user->password = bcrypt(request()->password);
         $user->save();

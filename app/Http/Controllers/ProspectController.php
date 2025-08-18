@@ -39,7 +39,7 @@ class ProspectController extends Controller
     private function authorizedAdmin(Request $request) {
          $user = $request->attributes->get('jwt_user');
          if ($user->role !== 'admin') {
-            abourt('Unauthorized', 403);
+            abort( 403,'Unauthorized');
          }
 }
     /**
@@ -59,5 +59,123 @@ class ProspectController extends Controller
             'plan' => 'required|string|max:100',
         ]);
         return $validator->validate();
-    }   
+        }
+
+        /**
+         * Lista de prospectos 
+         */
+
+    public function listProspects(Request $request) {
+        /**
+         * Validacion de usuarios 
+        */
+        $user = $request->attributes->get('jwt_user');
+
+        if ($user->role === 'admin') {
+            return response()->json(ProspectAradial::all(),
+             200
+            );
+        }
+         if ($user->role === 'supervisor') {
+            return response()->json(
+                ProspectAradial::where('branch', $user->branch)->get(), 
+                200
+            );
+            
+        }
+        return response()->json([
+            'error'=> 'Unauthorized',
+            'message' => 'User not authorized to view this resource'
+        ],
+        403);
+    }
+
+    /**
+     * Detalles de un prospecto
+     */
+    public function prospectDetails(Request $request, $id) {
+        /**
+         * Validacion de usuario 
+         */
+        $user = $request->attributes->get('jwt_user');
+        
+        if ($user->role === 'admin' || $user->role === 'supervisor') {
+            $prospect = ProspectAradial::find($id);
+            if (!$prospect) {
+                return response()->json([
+                    'error' => 'Not Found',
+                    'message' => 'Prospect not found'
+                ], 404);
+            }
+            return response()->json($prospect, 200);
+        }
+        return response()->json([
+            'error'=> 'Unauthorized',
+            'message' => 'User not authorized to view this resource'
+        ], 403);
+    }
+
+    /**
+     * Actualizar prospecto
+     */
+    public function updateProspect(Request $request, $id) {
+        /**
+         * Validacion de usuario 
+         */
+        $user = $request->attributes->get('jwt_user');
+        
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'User not authorized to update this resource'
+            ], 403);
+        }
+        
+        $prospect = ProspectAradial::find($id);
+        if (!$prospect) {
+            return response()->json([
+                'error' => 'Not Found',
+                'message' => 'Prospect not found'
+            ], 404);
+        }
+
+        $validated = $this->validateProspect($request);
+        $prospect->update($validated);
+
+        return response()->json([
+            'message' => 'Prospect updated successfully',
+            'prospect' => $prospect
+        ], 200);
+    }
+
+    /**
+     * Eliminar prospecto
+     */
+    public function deleteProspect(Request $request, $id) {
+        /**
+         * Validacion de usuario 
+         */
+        $user = $request->attributes->get('jwt_user');
+        
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'User not authorized to delete this resource'
+            ], 403);
+        }
+        
+        $prospect = ProspectAradial::find($id);
+        if (!$prospect) {
+            return response()->json([
+                'error' => 'Not Found',
+                'message' => 'Prospect not found'
+            ], 404);
+        }
+
+        $prospect->delete();
+
+        return response()->json([
+            'message' => 'Prospect deleted successfully'
+        ], 200);
+    }
 }

@@ -46,6 +46,7 @@ class LoginController extends Controller
     public function register()
     {
         $validator = Validator::make(request()->all(), [
+            'aradial_user_id' => 'required|string|unique',
             'name' => 'required',
             'last_name' => 'required',
             'document' => 'required|unique:users',
@@ -53,9 +54,9 @@ class LoginController extends Controller
             'phone' => 'required',
             'branch' => 'required',
             'role' => [
-                'required',
+            'required',
                 'string',
-                'in:admin,contractor,supervisor'
+                'in:contractor,supervisor'
             ],
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',

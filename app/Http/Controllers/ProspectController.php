@@ -4,30 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\ProspectAradial;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
-use App\Policies\UserProspectPolicy;
-
-
-
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Routing\Controller;
 
 class ProspectController extends Controller
 {
+    use AuthorizesRequests;
+
+
        public function registerProspect(Request $request)
     {
         // Autorización con Policy
         $this->authorize('create', ProspectAradial::class);
-
+       
+        $user = $request->user();
+        
         // Validación de los datos del prospecto
         $validated = $this->validateProspect($request);
-        
-        // Creación
-        $prospect = ProspectAradial::create($validated);
-
-        return response()->json([
-            'message' => 'Prospecto creado con éxito',
-            'prospect' => $prospect
-        ])->setStatusCode(201);
+        if (!$validated){
+            return response()->json(['message'=>'Validation error'], 422);
+        }
     }
 
     public function listProspects(Request $request)
@@ -36,36 +33,36 @@ class ProspectController extends Controller
         $this->authorize('viewAny', ProspectAradial::class);
 
         // Lógica específica según rol
-        $user = $request->user(); // Asumiendo que Auth::user() está disponible
-        
+        $user = $request->user(); 
+
         if ($user->role === 'admin') {
             return response()->json(ProspectAradial::all(), 200);
-        }
-        
-        if ($user->role === 'supervisor') {
+        } elseif ($user->role === 'supervisor') {
             return response()->json(
                 ProspectAradial::where('branch', $user->branch)->get(), 
                 200
             );
-        }
+        } else {
+                return response()->json(['message'=>'Unathorized'], 403);
+            }
     }
 
-    public function prospectDetails(Request $request, $id)
+    public function detailsProspect(Request $request, $id)
     {
-        // ✅ AUTORIZACIÓN CON POLICY
+        // Autorización con Policy
         $prospect = ProspectAradial::findOrFail($id);
         $this->authorize('view', $prospect);
 
         return response()->json($prospect, 200);
     }
 
-    public function updateProspect(Request $request, $id)
+    public function updatedProspect(Request $request, $id)
     {
-        // ✅ AUTORIZACIÓN CON POLICY
+        // Autorización con Policy
         $prospect = ProspectAradial::findOrFail($id);
         $this->authorize('update', $prospect);
 
-        $validated = $this->validateProspect($request);
+        $validated = $this->validateProspect($request, $prospect);
         $prospect->update($validated);
 
         return response()->json([
@@ -76,7 +73,7 @@ class ProspectController extends Controller
 
     public function deleteProspect(Request $request, $id)
     {
-        // ✅ AUTORIZACIÓN CON POLICY
+        // Autorización con Policy
         $prospect = ProspectAradial::findOrFail($id);
         $this->authorize('delete', $prospect);
 
@@ -87,9 +84,9 @@ class ProspectController extends Controller
         ], 200);
     }
 
-    private function validateProspect(Request $request)
+    private function validateProspect(Request $request, $prospect = null)
     {
-        return Validator::make($request->all(), [
+       $rules = [
             'aradial_id' => 'required|string|unique:prospect_aradial,aradial_id',
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -100,6 +97,13 @@ class ProspectController extends Controller
             'city' => 'required|string|max:100',
             'email' => 'required|email|max:255',
             'plan' => 'required|string|max:100',
-        ])->validate();
+        ];
+        // Si es una actualización, ignorar la unicidad del aradial_id del prospecto actual
+        if ($prospect) {
+            $rules['aradial_id'] .= ",aradial_id,{$prospect->id}";
+        } else {
+            $rules['aradial_id'] .= "|unique:prsopect_aradial,aradial_id";
+        }
+        return Validator::make($request->all(), $rules)->validate();
     }
 }

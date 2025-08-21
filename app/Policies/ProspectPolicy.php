@@ -8,7 +8,7 @@ use Illuminate\Auth\Access\Response;
 
 
 
-class UserProspectPolicy
+class ProspectPolicy
 {
  /**
      * Determine cual usuario pueden crear un prospecto.
@@ -17,7 +17,7 @@ class UserProspectPolicy
     {
         return $user->role === 'admin'
             ? Response::allow()
-            : Response::deny('Unathorized.');
+            : Response::deny('Unauthorized.');
     }
 
     /**
@@ -25,6 +25,7 @@ class UserProspectPolicy
      */
     public function viewAny(User $user): Response
     {
+        
         if ($user->role === 'admin') {
             return Response::allow();
         }
@@ -33,7 +34,7 @@ class UserProspectPolicy
             return Response::allow();
         }
 
-        return Response::deny('Unathorized.');
+        return Response::deny('Unauthorized.');
     }
 
     /**
@@ -49,7 +50,7 @@ class UserProspectPolicy
             return Response::allow();
         }
 
-        return Response::deny('Unathorized.');
+        return Response::deny('Unauthorized.');
     }
 
     /**
@@ -59,7 +60,7 @@ class UserProspectPolicy
     {
         return $user->role === 'admin'
             ? Response::allow()
-            : Response::deny('Unathorized.');
+            : Response::deny('Unauthorized.');
     }
 
     /**
@@ -69,7 +70,7 @@ class UserProspectPolicy
     {
         return $user->role === 'admin'
             ? Response::allow()
-            : Response::deny('Unathorized.');
+            : Response::deny('Unauthorized.');
     }
    
 }

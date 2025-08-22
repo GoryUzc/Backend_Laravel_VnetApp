@@ -9,25 +9,33 @@ class ProspectAradial extends Model
 {
     use HasFactory;
 
-   /**
-    * tabla asociada al modelo
-   * @var string
-    */
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'prospect_aradial';
 
     /**
-     * Clave secundaria externa 
+     * The primary key associated with the table.
+     *
      * @var string
      */
-    protected $secundaryKey = 'aradial_id';
+    protected $primaryKey = 'aradial_id';
 
     /**
-     * Clave secundaria no es auto incremental
-     * Viene de un sistema externo
+     * Indicates if the IDs are auto-incrementing.
+     *
      * @var bool
      */
     public $incrementing = false;
 
+    /**
+     * The data type of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -46,5 +54,14 @@ class ProspectAradial extends Model
         'email',
         'plan',
         'status_red',
+        'franchise_id',  // Added franchise_id to fillable
     ];
+
+    /**
+     * Relationship with franchise
+     */
+    public function franchise()
+    {
+        return $this->belongsTo(\App\Models\Franchises::class);
+    }
 }

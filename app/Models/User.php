@@ -8,13 +8,12 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * Los atributos que se pueden asignar masivamente.
+     * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array
      */
     protected $fillable = [
         'aradial_user_id',
@@ -31,9 +30,9 @@ class User extends Authenticatable
     ];
 
     /**
-     * Los atributos que deben ocultarse para la serialización.
+     * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array
      */
     protected $hidden = [
         'password',
@@ -41,18 +40,19 @@ class User extends Authenticatable
     ];
 
     /**
-     * Obtener los atributos que deben convertirse.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @return array
      */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
         ];
     }
 
-    // Relaciones 
+    /* Relationships */
     public function franchise()
     {
         return $this->belongsTo(\App\Models\Franchises::class);

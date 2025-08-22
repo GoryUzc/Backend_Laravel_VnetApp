@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -13,15 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'checkRol'=>App\Http\Middleware\CheckRol::class,
-            'jwtMiddleware'=>App\Http\Middleware\JwtMiddleware::class,
+            'jwt.auth' => \App\Http\Middleware\JwtMiddleware::class,
+            'check.role' => \App\Http\Middleware\CheckRol::class,
         ]);
      })
-     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (AuthenticationException $e, Request $request) {
+     ->withExceptions(function ($exceptions) {
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'message' => $e->getMessage(),
+                    'message' => 'Unauthorized',
+                    'error' => 'unauthorized'
                 ], 401);
             }
         });

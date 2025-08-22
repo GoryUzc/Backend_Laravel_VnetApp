@@ -14,128 +14,123 @@ class UserController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Registra un solo usuario (solo admin)
+     * Register a new user (admin only)
      */
-       public function registerUser(Request $request)
+    public function registerUser(Request $request)
     {
-        // Autorización con Policy
         $this->authorize('create', User::class);
-        
-        // Validación de datos Usurios
+
         $validated = $this->validateUser($request);
-        
-        //hashear contraseña
         $validated['password'] = Hash::make($validated['password']);
 
         $user = User::create($validated);
-    
+
         return response()->json([
-            'message'=> 'User created successfully',
-        'user'=> $user],
-            201 );
+            'message' => 'User created successfully',
+            'user' => $user->only('id', 'name', 'email', 'role_id', 'franchise_id', 'contractor_id')
+        ], 201);
     }
 
     /**
-     *listar usuarios 
+     * List all users (admin only)
      */
     public function listUser(Request $request)
     {
-        // Autorizacion con Policy
-        $this->authorize('viewAny', User::class); 
-     $validated = $this->validateUser($request);
+        $this->authorize('viewAny', User::class);
+        
+        $users = User::with(['franchise', 'role', 'contractor'])->get();
 
         return response()->json([
-        'message' => 'Users retrieved successfully',
-        'users' => User::all()
+            'message' => 'Users retrieved successfully',
+            'users' => $users
         ], 200);
     }
 
     /**
-     * Detalles de usuario
+     * Get user details (admin only)
      */
     public function detailsUser(Request $request, $id)
     {
-        // Autorización con Policy
-        $userToBeViewed = User::findOrFail($id);
-        $this->authorize('view', $userToBeViewed);
+        $user = User::with(['franchise', 'role', 'contractor'])->findOrFail($id);
+        $this->authorize('view', $user);
 
         return response()->json([
-        'message' => 'User retrieved successfully',
-        'user' => $userToBeViewed
+            'message' => 'User details retrieved successfully',
+            'user' => $user
         ], 200);
     }
 
+    /**
+     * Update a user (admin only)
+     */
     public function updateUser(Request $request, $id)
     {
-        // Autorización con Policy
-        $userToBeUpdated = User::findOrFail($id);
-        $this->authorize('update', $userToBeUpdated);
+        $user = User::findOrFail($id);
+        $this->authorize('update', $user);
 
-        $validated = $this->validateUser($request, $userToBeUpdated);
+        $validated = $this->validateUser($request, $user);
 
-         if ($request->filled('password')) {
+        if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
-            unset($validated['password']); // No modificar contraseña
+            unset($validated['password']);
         }
 
-        $userToBeUpdated->update($validated);
+        $user->update($validated);
 
         return response()->json([
-            'message' => 'User successfully updated.',
-            'userToBeUpdated' => $userToBeUpdated->refresh()
+            'message' => 'User updated successfully',
+            'user' => $user->refresh()->load(['franchise', 'role', 'contractor'])
         ], 200);
-        
     }
 
+    /**
+     * Delete a user (admin only)
+     */
     public function deleteUser(Request $request, $id)
     {
-        // Autorización con Policy
-        $userToBeDeleted = User::findOrFail($id);
-        $this->authorize('delete', $userToBeDeleted);
+        $user = User::findOrFail($id);
+        $this->authorize('delete', $user);
 
-        $userToBeDeleted->delete();
+        $user->delete();
 
         return response()->json([
-            'message' => 'User successfully deleted.'
+            'message' => 'User deleted successfully'
         ], 200);
-        
     }
 
- private function validateUser(Request $request, $user = null)
-{
-    $rules = [
-        'aradial_user_id' => [
-            'required', 'string',
-            Rule::unique('users', 'aradial_user_id')->ignore($user?->id)
-        ],
-        'name' => 'required|string|max:50',
-        'last_name' => 'required|string|max:50',
-        'document' => [
-            'required', 'string', 'max:20',
-            Rule::unique('users', 'document')->ignore($user?->id)
-        ],
-        'document_type' => 'required|string|max:20',
-        'phone' => 'required|string|max:20',
-        'franchise_id' =>  [
-            'required', 'string',
-            Rule::unique('users', 'franchies_id')->ignore($user?->id)
-        ],
-        'role_id' => [
-            'required', 'string',
-            Rule::unique('users', 'role_id')->ignore($user?->id)
-        ],
-        'contractors_id' =>  [
-            'required', 'string',
-            Rule::unique('users', 'contractor_id')->ignore($user?->id)
-        ],
-        'email' => [
-            'required', 'email',
-            Rule::unique('users', 'email')->ignore($user?->id)
-        ],
-        'password' => $user ? 'nullable|string|min:8' : 'required|string|min:8',
-    ];
+    /**
+     * Validate user data
+     */
+    private function validateUser(Request $request, $user = null)
+    {
+        $rules = [
+            'aradial_user_id' => [
+                'required', 
+                'string',
+                Rule::unique('users', 'aradial_user_id')->ignore($user?->id)
+            ],
+            'name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'document' => [
+                'required', 
+                'string', 
+                'max:20',
+                Rule::unique('users', 'document')->ignore($user?->id)
+            ],
+            'document_type' => 'required|string|max:20',
+            'phone' => 'required|string|max:20',
+            'franchise_id' => 'required|exists:franchises,id',
+            'role_id' => 'required|exists:roles,id',
+            'contractor_id' => 'nullable|exists:contractors,id',
+            'email' => [
+                'required', 
+                'email',
+                Rule::unique('users', 'email')->ignore($user?->id)
+            ],
+            'password' => $user ? 'nullable|string|min:8' : 'required|string|min:8',
+        ];
 
-    return Validator::make($request->all(), $rules)->validate();
+        return Validator::make($request->all(), $rules)->validate();
     }
 }

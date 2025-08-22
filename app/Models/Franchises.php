@@ -19,4 +19,7 @@ class Franchises extends Model
     public function users(){
         return $this->hasMany(User::class);
     }
+    public function franchises(){
+        return $this->hasMany(Franchises::class);
+    }
 }

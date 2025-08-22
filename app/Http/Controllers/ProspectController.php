@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProspectAradial;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -11,82 +12,105 @@ class ProspectController extends Controller
 {
     use AuthorizesRequests;
 
-
-       public function registerProspect(Request $request)
+    /**
+     * Register a new prospect (admin only)
+     */
+    public function registerProspect(Request $request)
     {
-        // Autorización con Policy
         $this->authorize('create', ProspectAradial::class);
-       
-        $user = $request->user();
         
-        // Validación de los datos del prospecto
         $validated = $this->validateProspect($request);
-        if (!$validated){
-            return response()->json(['message'=>'Validation error'], 422);
-        }
+        $prospect = ProspectAradial::create($validated);
+
+        return response()->json([
+            'message' => 'Prospect created successfully',
+            'prospect' => $prospect
+        ], 201);
     }
 
+    /**
+     * List all prospects (admin and supervisors only)
+     */
     public function listProspects(Request $request)
     {
-        // ✅ AUTORIZACIÓN CON POLICY
         $this->authorize('viewAny', ProspectAradial::class);
+        $user = $request->user();
 
-        // Lógica específica según rol
-        $user = $request->user(); 
+        $prospects = match((int)$user->role_id) {
+            1 => ProspectAradial::with('franchise')->get(),
+            2 => ProspectAradial::with('franchise')
+                    ->where('franchise_id', $user->franchise_id)
+                    ->get(),
+            default => null
+        };
 
-        if ($user->role === 'admin') {
-            return response()->json(ProspectAradial::all(), 200);
-        } elseif ($user->role === 'supervisor') {
-            return response()->json(
-                ProspectAradial::where('franchise_id', $user->franchise_id)->get(), 
-                200
-            );
-        } else {
-                return response()->json(['message'=>'Unathorized'], 403);
-            }
+        if (!$prospects) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'message' => 'Prospects retrieved successfully',
+            'prospects' => $prospects
+        ], 200);
     }
 
-    public function detailsProspect(Request $request, $id)
+    /**
+     * Get prospect details (admin and supervisors of the same franchise)
+     */
+    public function prospectDetails(Request $request, $id)
     {
-        // Autorización con Policy
-        $prospect = ProspectAradial::findOrFail($id);
+        $prospect = ProspectAradial::with('franchise')->findOrFail($id);
         $this->authorize('view', $prospect);
 
-        return response()->json($prospect, 200);
+        return response()->json([
+            'message' => 'Prospect details retrieved successfully',
+            'prospect' => $prospect
+        ], 200);
     }
 
-    public function updatedProspect(Request $request, $id)
+    /**
+     * Update a prospect (admin only)
+     */
+    public function updateProspect(Request $request, $id)
     {
-        // Autorización con Policy
-        $prospect = ProspectAradial::findOrFail($id);
+        $prospect = ProspectAradial::with('franchise')->findOrFail($id);
         $this->authorize('update', $prospect);
 
         $validated = $this->validateProspect($request, $prospect);
         $prospect->update($validated);
 
         return response()->json([
-            'message' => 'Prospecto actualizado con éxito',
-            'prospect' => $prospect
+            'message' => 'Prospect updated successfully',
+            'prospect' => $prospect->refresh()
         ], 200);
     }
 
+    /**
+     * Delete a prospect (admin only)
+     */
     public function deleteProspect(Request $request, $id)
     {
-        // Autorización con Policy
         $prospect = ProspectAradial::findOrFail($id);
         $this->authorize('delete', $prospect);
 
         $prospect->delete();
 
         return response()->json([
-            'message' => 'Prospecto eliminado con éxito'
+            'message' => 'Prospect deleted successfully'
         ], 200);
     }
 
+    /**
+     * Validate prospect data
+     */
     private function validateProspect(Request $request, $prospect = null)
     {
-       $rules = [
-            'aradial_id' => 'required|string|unique:prospect_aradial,aradial_id',
+        $rules = [
+            'aradial_id' => [
+                'required',
+                'string',
+                Rule::unique('prospect_aradial', 'aradial_id')->ignore($prospect?->aradial_id, 'aradial_id')
+            ],
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'document' => 'required|string|max:255',
@@ -96,13 +120,10 @@ class ProspectController extends Controller
             'city' => 'required|string|max:100',
             'email' => 'required|email|max:255',
             'plan' => 'required|string|max:100',
+            'franchise_id' => 'required|exists:franchises,id',
+            'status_red' => 'nullable|string|max:50',
         ];
-        // Si es una actualización, ignorar la unicidad del aradial_id del prospecto actual
-        if ($prospect) {
-            $rules['aradial_id'] .= ",aradial_id,{$prospect->id}";
-        } else {
-            $rules['aradial_id'] .= "|unique:prsopect_aradial,aradial_id";
-        }
+
         return Validator::make($request->all(), $rules)->validate();
     }
 }

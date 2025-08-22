@@ -4,76 +4,42 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProspectController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ContractorController;
 
 
-/**
- * RUTAS PUBLICAS
- */
-/**
- * Rutas de atenticacion y registro de usuarios
- */
-Route::post('/login', [LoginController::class, 'login'])
-    ->name('login');
+Route::prefix('/api')->group(function () {
+    // Rutas públicas
+    Route::post('/login', [LoginController::class, 'login'])->name('api.login');
+    Route::post('/register', [LoginController::class, 'register'])->name('api.register');
 
-Route::post('/register', [LoginController::class, 'register'])
-    ->name('register');
+    // Rutas protegidas por JWT
+    Route::middleware('jwt.auth')->group(function () {
+        // Rutas para Admin (role_id = 1)
+        Route::middleware('check.role:1')->group(function () {
+            // CRUD de Prospectos
+            Route::post('/prospects', [ProspectController::class, 'registerProspect'])->name('api.prospects.create');
+            Route::get('/prospects', [ProspectController::class, 'listProspects'])->name('api.prospects.index');
+            Route::get('/prospects/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show');
+            Route::put('/prospects/{id}', [ProspectController::class, 'updateProspect'])->name('api.prospects.update');
+            Route::delete('/prospects/{id}', [ProspectController::class, 'deleteProspect'])->name('api.prospects.delete');
 
-/**
- * RUTAS PRIVADAS 
- * 
- * 
- */
-/**
- * RUTAS ADMIN
- */
-Route::middleware(['JwtMiddleware', 'check.role:1'])->group(function () {
-//      RUTAS CRUD PROSPECTOS
+            // CRUD de Usuarios
+            Route::post('/users', [UserController::class, 'registerUser'])->name('api.users.create');
+            Route::get('/users', [UserController::class, 'listUser'])->name('api.users.index');
+            Route::get('/users/{id}', [UserController::class, 'detailsUser'])->name('api.users.show');
+            Route::put('/users/{id}', [UserController::class, 'updateUser'])->name('api.users.update');
+            Route::delete('/users/{id}', [UserController::class, 'deleteUser'])->name('api.users.delete');
+        });
 
-    // Registro de prospectos
-    Route::post('/prospect/register', [ProspectController::class, 'registerProspect'])->name('prospect.register');
-   //lista de prospectos 
-    Route::get('/prospect/list', [ProspectController::class, 'listProspects'])->name('prospect.list');
-    // Detalles de prospecto
-    Route::get('/prospect/details/{id}', [ProspectController::class, 'prospectDetails'])->name('prospect.details');
-        // Actualizar prospecto
-    Route::put('/prospect/update/{id}', [ProspectController::class, 'updateProspect'])->name( 'prospect.update');
-        // Eliminar prospecto
-    Route::delete('/prospect/delete/{id}', [ProspectController::class, 'deleteProspect'])->name('prospect.delete');
+        // Rutas para Supervisor (role_id = 2)
+        Route::middleware('check.role:2')->group(function () {
+            Route::get('/prospects', [ProspectController::class, 'listProspects'])->name('api.supervisor.prospects.index');
+            Route::get('/prospects/{id}', [ProspectController::class, 'prospectDetails'])->name('api.supervisor.prospects.show');
+        });
 
-// RUTAS CRUD USUARIOS
-    //Registro de prospectos
-     Route::post('/user/register', [UserController::class, 'registerUser'])->name('user.register');
-     // Lista de Usuarios
-     Route::get('/user/list', [UserController::class, 'listUser'])->name('user.list');
-    // Detalle de un usuario
-     Route::get('/user/details/{id}', [UserController::class, 'detailsUser'])->name('user.details');
-    // Actualizacion de Usuario
-     Route::put('/user/update/{id}', [UserController::class,'updateUser'])->name('user.update');
-    // Eliminar Usuario 
-    Route::delete('/user/delete/{id}', [UserController::class,'deleteUser'])->name('user.delete');
-
-
-    
-});
-   
-
-/**
- * RUTAS SUPERVISOR 
- */
-Route::middleware(['Jwtmiddleware', 'check.role:2'])->group(function () {
-    
-    //lista de prospectos 
-    Route::get('/prospect/list', [ProspectController::class, 'listProspects'])->name('/prospect.list');
-
-    // Detalles de prospecto
-    Route::get('/prospect\details/{id}', [ProspectController::class, 'prospectDetails'])->name('/prospect.details');
-
-});
-
-
-/**
- * RUTAS CONTRATISTA
- */
-Route::middleware(['Jwtmiddleware', 'check.role:3'])->group(function () {
-    
+        // Rutas para Contractor (role_id = 3)
+        Route::middleware('check.role:3')->group(function () {
+            // Aquí puedes añadir rutas específicas para contractors
+        });
+    });
 });

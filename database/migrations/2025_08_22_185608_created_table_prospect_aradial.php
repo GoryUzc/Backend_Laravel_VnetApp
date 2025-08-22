@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('plan');
             $table->string('status_red')->default('inactivo');
+            $table->foreignId('franchise_id')->constrained('franchises');
             $table->timestamps();    
         });
     }

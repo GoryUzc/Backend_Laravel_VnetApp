@@ -6,71 +6,67 @@ use App\Models\User;
 use App\Models\ProspectAradial;
 use Illuminate\Auth\Access\Response;
 
-
-
 class ProspectPolicy
 {
- /**
-     * Determine cual usuario pueden crear un prospecto.
+    /**
+     * Determine if the user can create prospects.
      */
     public function create(User $user): Response
     {
-        return $user->role === 'admin'
+        return (int)$user->role_id === 1
             ? Response::allow()
-            : Response::deny('Unauthorized.');
+            : Response::deny('Unauthorized. Admin access required.');
     }
 
     /**
-     * Determina que usuario puede ver todos los prospectos.
+     * Determine if the user can view any prospects.
      */
     public function viewAny(User $user): Response
     {
+        $roleId = (int)$user->role_id;
         
-        if ($user->role === 'admin') {
+        if (in_array($roleId, [1, 2])) {
             return Response::allow();
         }
-
-        if ($user->role === 'supervisor') {
-            return Response::allow();
-        }
-
-        return Response::deny('Unauthorized.');
+        
+        return Response::deny('Unauthorized. Admin or Supervisor access required.');
     }
 
     /**
-     * Determina si el usuario puede ver un prospecto en especifico.
+     * Determine if the user can view the specified prospect.
      */
     public function view(User $user, ProspectAradial $prospect): Response
     {
-        if ($user->role === 'admin') {
+        $roleId = (int)$user->role_id;
+        
+        if ($roleId === 1) {
             return Response::allow();
         }
-
-        if ($user->role === 'supervisor' && $user->branch === $prospect->branch) {
+        
+        if ($roleId === 2 && $user->franchise_id == $prospect->franchise_id) {
             return Response::allow();
         }
-
-        return Response::deny('Unauthorized.');
+        
+        return Response::deny('Unauthorized. You can only view prospects from your franchise.');
     }
 
     /**
-     * Determina que usuario puede actualizar un prspecto.
+     * Determine if the user can update the specified prospect.
      */
-    public function update(User $user): Response
+    public function update(User $user, ProspectAradial $prospect): Response
     {
-        return $user->role === 'admin'
+        return (int)$user->role_id === 1
             ? Response::allow()
-            : Response::deny('Unauthorized.');
+            : Response::deny('Unauthorized. Admin access required.');
     }
 
     /**
-     * Determina que usuario puede borrar un prospecto .
+     * Determine if the user can delete the specified prospect.
      */
-    public function delete(User $user): Response
+    public function delete(User $user, ProspectAradial $prospect): Response
     {
-        return $user->role === 'admin'
+        return (int)$user->role_id === 1
             ? Response::allow()
-            : Response::deny('Unauthorized.');
+            : Response::deny('Unauthorized. Admin access required.');
     }
-   
 }

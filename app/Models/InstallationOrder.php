@@ -22,7 +22,7 @@ class InstallationOrder extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var arrays
+     * @var array
      */
     protected $fillable = [
         'user_id',

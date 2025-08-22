@@ -7,6 +7,9 @@ use App\Http\Controllers\UserController;
 
 
 /**
+ * RUTAS PUBLICAS
+ */
+/**
  * Rutas de atenticacion y registro de usuarios
  */
 Route::post('/login', [LoginController::class, 'login'])
@@ -15,11 +18,15 @@ Route::post('/login', [LoginController::class, 'login'])
 Route::post('/register', [LoginController::class, 'register'])
     ->name('register');
 
-
+/**
+ * RUTAS PRIVADAS 
+ * 
+ * 
+ */
 /**
  * RUTAS ADMIN
  */
-Route::middleware(['auth.jwt', 'check.role:admin'])->group(function () {
+Route::middleware(['JwtMiddleware', 'check.role:1'])->group(function () {
 //      RUTAS CRUD PROSPECTOS
 
     // Registro de prospectos
@@ -53,7 +60,7 @@ Route::middleware(['auth.jwt', 'check.role:admin'])->group(function () {
 /**
  * RUTAS SUPERVISOR 
  */
-Route::middleware(['auth.jwt', 'check.role:supervisor'])->group(function () {
+Route::middleware(['Jwtmiddleware', 'check.role:2'])->group(function () {
     
     //lista de prospectos 
     Route::get('/prospect/list', [ProspectController::class, 'listProspects'])->name('/prospect.list');
@@ -67,6 +74,6 @@ Route::middleware(['auth.jwt', 'check.role:supervisor'])->group(function () {
 /**
  * RUTAS CONTRATISTA
  */
-Route::middleware(['auth.jwt', 'check.role:contractor'])->group(function () {
+Route::middleware(['Jwtmiddleware', 'check.role:3'])->group(function () {
     
 });

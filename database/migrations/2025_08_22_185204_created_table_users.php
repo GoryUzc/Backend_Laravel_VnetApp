@@ -19,10 +19,12 @@ return new class extends Migration
             $table->string('document')->unique();
             $table->string('document_type');
             $table->string('phone')->nullable();
-            $table->string('branch'); 
-            $table->string('role', 20);
+            $table->foreignId('franchise_id')->constrained('franchises'); 
+            $table->foreignId('role_id')->constrained('roles');
+            $table->foreignId('contractor_id')->constrained('contractors')
+                                                    ->onUpdate('cascade')
+                                                    ->onDelete('cascade');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
@@ -36,4 +38,3 @@ return new class extends Migration
         Schema::dropIfExists('users');
     }
 };
-

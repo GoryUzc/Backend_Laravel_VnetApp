@@ -6,7 +6,6 @@ use App\Models\ProspectAradial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Routing\Controller;
 
 class ProspectController extends Controller
 {
@@ -39,7 +38,7 @@ class ProspectController extends Controller
             return response()->json(ProspectAradial::all(), 200);
         } elseif ($user->role === 'supervisor') {
             return response()->json(
-                ProspectAradial::where('branch', $user->branch)->get(), 
+                ProspectAradial::where('franchise_id', $user->franchise_id)->get(), 
                 200
             );
         } else {

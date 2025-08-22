@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'checkRol'=>App\Http\Middleware\CheckRol::class,
+            'jwtMiddleware'=>App\Http\Middleware\JwtMiddleware::class,
         ]);
      })
      ->withExceptions(function (Exceptions $exceptions) {

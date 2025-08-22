@@ -15,7 +15,7 @@ class Meeting extends Model {
     /**
      * The attributes that are mass assignable.
      *
-     * @var arrays
+     * @var array
      */
     protected $fillable = [
         'prospect_aradial_id',

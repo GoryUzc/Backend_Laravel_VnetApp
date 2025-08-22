@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,25 +12,26 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Los atributos que se pueden asignar masivamente.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'user_aradial_id',
+        'aradial_user_id',
         'name',
         'last_name',
         'document',
         'document_type',
         'phone',
-        'branch',
-        'role',
+        'franchise_id',
+        'role_id',
+        'contractor_id',
         'email',
         'password',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Los atributos que deben ocultarse para la serialización.
      *
      * @var list<string>
      */
@@ -39,24 +39,32 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
     /**
-     * Get the attributes that should be cast.
+     * Obtener los atributos que deben convertirse.
      *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
-     /*public function getJWTIdentifier()
+
+    // Relaciones 
+    public function franchise()
     {
-        return $this->getKey();
+        return $this->belongsTo(\App\Models\Franchises::class);
     }
-  public function getJWTCustomClaims()
+
+    public function role()
     {
-        return [];
-    }*/
+        return $this->belongsTo(\App\Models\Role::class);
+    }
+
+    public function contractor()
+    {
+        return $this->belongsTo(\App\Models\Contractor::class, 'contractor_id');
+    }
 }

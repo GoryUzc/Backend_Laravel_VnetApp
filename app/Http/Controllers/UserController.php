@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -118,8 +117,18 @@ class UserController extends Controller
         ],
         'document_type' => 'required|string|max:20',
         'phone' => 'required|string|max:20',
-        'branch' => 'required|string|max:20',
-        'role' => 'required|string|in:admin,contractor,supervisor',
+        'franchise_id' =>  [
+            'required', 'string',
+            Rule::unique('users', 'franchies_id')->ignore($user?->id)
+        ],
+        'role_id' => [
+            'required', 'string',
+            Rule::unique('users', 'role_id')->ignore($user?->id)
+        ],
+        'contractors_id' =>  [
+            'required', 'string',
+            Rule::unique('users', 'contractor_id')->ignore($user?->id)
+        ],
         'email' => [
             'required', 'email',
             Rule::unique('users', 'email')->ignore($user?->id)

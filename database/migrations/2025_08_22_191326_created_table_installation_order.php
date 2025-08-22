@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('installation_order', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id');
-            $table->string('id_meeting');
-            $table->string('prospect_aradial_id');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('id_meeting')->constrained('meeting')->onDelete('cascade');
+            $table->foreignId('prospect_aradial_id')->constrained('prospect_aradial')->onDelete('cascade');
             $table->integer('ont_puerto_1');
             $table->integer('conector_sc_pc');
             $table->integer('patch_cord_scpc-scapc');

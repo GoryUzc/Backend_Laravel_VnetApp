@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProspectAradial extends Model
 {
@@ -17,13 +16,13 @@ class ProspectAradial extends Model
     protected $table = 'prospect_aradial';
 
     /**
-     * Clave primaria externa 
+     * Clave secundaria externa 
      * @var string
      */
-    protected $primaryKey = 'aradial_id';
+    protected $secundaryKey = 'aradial_id';
 
     /**
-     * Clave primaria no es auto incremental
+     * Clave secundaria no es auto incremental
      * Viene de un sistema externo
      * @var bool
      */
@@ -33,7 +32,7 @@ class ProspectAradial extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var arrays
+     * @var array
      */
     protected $fillable = [
         'aradial_id',
@@ -48,14 +47,4 @@ class ProspectAradial extends Model
         'plan',
         'status_red',
     ];
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected  $casts = [
-
-            'phone' => 'string',
-            'email' => 'string',
-        ];
 }

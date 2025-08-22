@@ -55,7 +55,7 @@ class UserPolicy
     /**
      * Elimina User
      */
-    public function delete(User $authenticatedUser, User $userToBeDeleted): Response
+    public function delete(User  $authenticatedUser, User $userToBeDeleted): Response
     {
        return $this->isAdmin($authenticatedUser);
     }

@@ -14,7 +14,7 @@ class ContractorController extends Controller
     /**
      * List all contractors (admin and supervisors only)
      */
-    public function index(Request $request)
+    public function registerContractor(Request $request)
     {
         $this->authorize('viewAny', Contractor::class);
         $user = $request->user();
@@ -29,16 +29,18 @@ class ContractorController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+         $contractor = Contractor::create($request->all());
+
         return response()->json([
-            'message' => 'Contractors list retrieved successfully',
-            'contractors' => $contractors
-        ], 200);
+            'message' => 'Contractor created successfully',
+            'contractor' => $contractor->load('users')
+        ], 201);
     }
 
     /**
      * Register a new contractor
      */
-    public function store(Request $request)
+    public function listContractor(Request $request)
     {
         $this->authorize('create', Contractor::class);
         $user = $request->user();
@@ -63,19 +65,12 @@ class ContractorController extends Controller
                 'message' => 'You cannot create contractors in other franchises'
             ], 403);
         }
-
-        $contractor = Contractor::create($request->all());
-
-        return response()->json([
-            'message' => 'Contractor created successfully',
-            'contractor' => $contractor->load('users')
-        ], 201);
     }
-
+       
     /**
      * Show contractor details
      */
-    public function show(Request $request, $id)
+    public function detailsContractor(Request $request, $id)
     {
         $contractor = Contractor::with('users')->findOrFail($id);
         $this->authorize('view', $contractor);
@@ -89,7 +84,7 @@ class ContractorController extends Controller
     /**
      * Update a contractor
      */
-    public function update(Request $request, $id)
+    public function updateContractor(Request $request, $id)
     {
         $contractor = Contractor::findOrFail($id);
         $this->authorize('update', $contractor);
@@ -127,7 +122,7 @@ class ContractorController extends Controller
     /**
      * Delete a contractor
      */
-    public function destroy(Request $request, $id)
+    public function deleteContractor(Request $request, $id)
     {
         $contractor = Contractor::findOrFail($id);
         $this->authorize('delete', $contractor);
@@ -144,5 +139,15 @@ class ContractorController extends Controller
         return response()->json([
             'message' => 'Contractor deleted successfully'
         ], 200);
+    }
+
+    //List contractors to process for register (public)
+    public function lisForRegistration(){
+        $contractors = Contractor::select(
+            'id', 'legal_name')->get(); 
+            return response()->json([
+                'message' => 'Contractors list retrived successfully',
+                'contractors' => $contractors
+            ], 200);
     }
 }

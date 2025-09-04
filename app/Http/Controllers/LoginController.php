@@ -39,11 +39,8 @@ class LoginController extends Controller
             'sub' => $user->id,
             'iat' => time(),
             'exp' => time() + 3600, // 1 hora
-            'name' => $user->name,
-            'last_name' => $user->last_name,
             'role_id' => $user->role_id,
-            'franchise_id' => $user->franchise_id,
-            'email' => $user->email,
+            'franchises' => $user->franchise_id,
         ];
 
         try {
@@ -53,14 +50,11 @@ class LoginController extends Controller
                 'token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => 3600,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role_id' => $user->role_id,
-                    'franchise_id' => $user->franchise_id,
-                ]
-            ], 200);
+                'id' => $user->id,
+                'role_id' => $user->role_id,
+                'franchise' => $user->franchise_id,
+            ],
+             200);
         } catch (\Exception $e) {
             Log::error('Error al generar token JWT: ' . $e->getMessage());
             return response()->json(['error' => 'Error interno del servidor'], 500);
@@ -91,29 +85,28 @@ class LoginController extends Controller
             'phone' => 'required|string|max:20',
             'franchise_id' => 'required|exists:franchises,id',
             'role_id' => 'required|exists:roles,id',
-            'contractor_id' => 'nullable|exists:users,id',
+            'contractor_id' => 'nullable|exists:contractors,id',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
         ]);
         
         //
         if ($request->role_id == 3){
-            $rules = array_merge( [
-                'legal_name' => 'requiered|string|max:50',
-                'rif'=> 'required|string|unique:contractors,rif|max:20',
-                'contractor_name'=> 'requered|string|max:20',
-                'contractor_phone'=> 'required|string|max:20',
-                'contractor_email'=> 'required|email|max:20|unique:contractors,email',
-                'franchise_id'=> 'required|exist:franchise_id',
-                'address'=> 'required|string|max:250',
+            $request->validate([
+            'legal_name' => 'required|string|max:50',
+            'rif'=> 'required|string|unique:contractors,rif|max:20',
+            'contractor_name'=> 'required|string|max:255',
+            'contractor_phone'=> 'required|string|max:20',
+            'contractor_email'=> 'required|email|unique:contractors,email|max:255',
+            'franchise_id'=> 'required|exists:franchises,id',
+            'address'=> 'required|string|max:250'
             ]);
         } 
-
+        
         if ($request->role_id == 4){
-            $rules = ['contractor_id'] = 'required|exist:contractors, id';
+        $request->validate(['contractor_id' => 'required|exists:contractors,id']);
         }
 
-         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
@@ -125,9 +118,9 @@ class LoginController extends Controller
             $contractor = Contractor::create([
             'legal_name' => $request->legal_name,
             'rif'=> $request->rif,
-            'contractor_name'=> $request->name,
-            'contractor_phone'=> $request->phone,
-            'contractor_email'=> $request->email,
+            'name'=> $request->contractor_name,
+            'phone'=> $request->contractor_phone,
+            'email'=> $request->contractor_email,
             'franchise_id'=> $request->franchise_id,
             'address'=> $request->address
             ]);
@@ -166,10 +159,10 @@ class LoginController extends Controller
     }
     public function listFranchisesUser(){
         $franchises = Franchises::select(
-            'id', 'branch_oficce')->get(); 
+            'id', 'branch_office')->whereRaw("NULLIF(TRIM(branch_office), '') IS NOT NULL") ->get(); 
             return response()->json([
-                'message' => 'Franchises list retrived successfully',
-                'Frachises' => $franchises
+                'message' => 'franchises list retrived successfully',
+                'franchises' => $franchises
             ], 200);
     }
 
@@ -178,7 +171,7 @@ class LoginController extends Controller
             'id', 'name')->get(); 
             return response()->json([
                 'message' => 'Roles list retrived successfully',
-                'Roles' => $roles
+                'roles' => $roles
             ], 200);
     }
 }

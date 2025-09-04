@@ -21,9 +21,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->foreignId('franchise_id')->constrained('franchises'); 
             $table->foreignId('role_id')->constrained('roles');
-            $table->foreignId('contractor_id')->constrained('contractors')
-                                                    ->onUpdate('cascade')
-                                                    ->onDelete('cascade');
+            $table->foreignId('contractor_id')->constrained('contractors')->onDelete('cascade')->nullable();
             $table->string('email')->unique();
             $table->string('password');
             $table->rememberToken();

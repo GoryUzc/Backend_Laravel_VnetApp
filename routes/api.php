@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProspectController;
@@ -7,65 +8,37 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ContractorController;
 
 
-Route::prefix('/api')->group(function () {
+Route::prefix('/v1')->group(function () {
     
     // Rutas públicas
     Route::post('/login', [LoginController::class, 'login'])->name('api.login');
     Route::post('/register', [LoginController::class, 'register'])->name('api.register');
     Route::get('/franchises/list', [LoginController::class, 'listFranchisesUser'])->name('api.franchises.list');
-    Route::get('/contractors/list', [ContractorController::class,'listForRegistration'])->name('api.contractors.list');
-    Route::get('/role/list', [LoginController::class, 'listRoleUser'])->name('api.role.list');
+    Route::get('/contractor/list', [ContractorController::class,'listForRegister'])->name('api.contractors.list');
+    Route::get('/roles/list', [LoginController::class, 'listRoleUser'])->name('api.role.list');
    
     // Rutas protegidas por JWT
-    Route::middleware('jwt.auth')->group(function () {
-        // Rutas para Admin (role_id = 1)
-        Route::middleware('check.role:1')->group(function () {
+    Route::middleware(JwtMiddleware::class)->group(function () {
+        
             // CRUD de Prospectos
-            Route::post('/prospects', [ProspectController::class, 'registerProspect'])->name('api.prospects.create');
-            Route::get('/prospects', [ProspectController::class, 'listProspects'])->name('api.prospects.index');
-            Route::get('/prospects/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show');
-            Route::put('/prospects/{id}', [ProspectController::class, 'updateProspect'])->name('api.prospects.update');
-            Route::delete('/prospects/{id}', [ProspectController::class, 'deleteProspect'])->name('api.prospects.delete');
+            Route::post('/prospects/create', [ProspectController::class, 'registerProspect'])->name('api.prospects.create')->middleware('checkrole:1');
+            Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->name('api.prospects.index')->middleware('checkrole:1,2');
+            Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show')->middleware('checkrole:1,2');
+            Route::put('/prospects/update/{id}', [ProspectController::class, 'updateProspect'])->name('api.prospects.update')->middleware('checkrole:1');
+            Route::delete('/prospects/delete/{id}', [ProspectController::class, 'deleteProspect'])->name('api.prospects.delete')->middleware('checkrole:1');
 
             // CRUD de Usuarios
-            Route::post('/users', [UserController::class, 'registerUser'])->name('api.users.create');
-            Route::get('/users', [UserController::class, 'listUser'])->name('api.users.index');
-            Route::get('/users/{id}', [UserController::class, 'detailsUser'])->name('api.users.show');
-            Route::put('/users/{id}', [UserController::class, 'updateUser'])->name('api.users.update');
-            Route::delete('/users/{id}', [UserController::class, 'deleteUser'])->name('api.users.delete');
+            Route::post('/users/create', [UserController::class, 'registerUser'])->name('api.users.create')->middleware('checkrole:1');
+            Route::get('/users/list', [UserController::class, 'listUser'])->name('api.users.index')->middleware('checkrole:1');
+            Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->name('api.users.show')->middleware('checkrole:1');
+            Route::put('/users/update/{id}', [UserController::class, 'updateUser'])->name('api.users.update')->middleware('checkrole:1,2,3');
+            Route::delete('/users/delete/{id}', [UserController::class, 'deleteUser'])->name('api.users.delete')->middleware('checkrole:1,2,3');
 
             //CRUD Contratistas
-            Route::post('/contractor', [ContractorController::class, 'registerContractor'])->name('api.contractors.create');
-            Route::get('/contractor', [ContractorController::class, 'listContractor'])->name('api.contractors.index');
-            Route::get('/contractor/{id}', [ContractorController::class, 'detailsContractor'])->name('api.contractors.show');
-            Route::put('/contractor/{id}', [ContractorController::class, 'updateContractor'])->name('api.contractors.update');
-            Route::delete('/contractor/{id}', [ContractorController::class, 'deleteContractor'])->name('api.contractors.delete');
-        });
-
-        // Rutas para Supervisor (role_id = 2)
-        Route::middleware('check.role:2')->group(function () {
-            
-            //Prospectos listar y consulta
-            Route::get('/prospects', [ProspectController::class, 'listProspects'])->name('api.supervisor.prospects.index');
-            Route::get('/prospects/{id}', [ProspectController::class, 'prospectDetails'])->name('api.supervisor.prospects.show');
-
-            //Contratistas:
-            //Crear, listar 
-            //Consulta solo por sucursal
-            //Actualizar solo por sucursal
-            Route::post('/contractor', [ContractorController::class, 'registerContractor'])->name('api.contractors.create');
-            Route::get('/contractor', [ContractorController::class, 'listContractor'])->name('api.contractors.index');
-            Route::get('/contractor/{id}', [ContractorController::class, 'detailsContractor'])->name('api.contractors.show');
-            Route::put('/contractor/{id}', [ContractorController::class, 'updateContractor'])->name('api.contractors.update');
-
-        });
-
-        // Rutas para Contractor (role_id = 3)
-        Route::middleware('check.role:3')->group(function () {
-            //Contratista Consulta y actualizacion a su empresa
-            Route::post('/contractor', [ContractorController::class, 'registerContractor'])->name('api.contractors.create');
-            Route::get('/contractor/{id}', [ContractorController::class, 'detailsContractor'])->name('api.contractors.show');
-            Route::put('/contractor/{id}', [ContractorController::class, 'updateContractor'])->name('api.contractors.update');
-        });
+            Route::post('/contractors/create', [ContractorController::class, 'registerContractor'])->name('api.contractors.create')->middleware('checkrole:1');
+            Route::get('/contractors/list', [ContractorController::class, 'listContractor'])->name('api.contractors.index')->middleware('checkrole:1,2');
+            Route::get('/contractors/detail/{id}', [ContractorController::class, 'detailsContractor'])->name('api.contractors.show')->middleware('checkrole:1,2,3');
+            Route::put('/contractors/update/{id}', [ContractorController::class, 'updateContractor'])->name('api.contractors.update')->middleware('checkrole:1,2,3');
+            Route::delete('/contractors/delete/{id}', [ContractorController::class, 'deleteContractor'])->name('api.contractors.delete')->middleware('checkrole:1');
     });
 });

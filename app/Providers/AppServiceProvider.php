@@ -11,9 +11,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+         if ($this->app->isLocal()) {
+        // Configuración para desarrollo
+        \URL::forceRootUrl(config('app.url'));
+        \URL::forceScheme('http');
+                }
     }
-
     /**
      * Bootstrap any application services.
      */

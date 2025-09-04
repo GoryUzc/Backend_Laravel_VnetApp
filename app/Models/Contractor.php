@@ -21,6 +21,8 @@ class Contractor extends Model
         'address'
     ];
     
+    public $timestamps = false;
+    
     /**
      * Un contractor (empresa) tiene muchos usuarios (técnicos y personal)
      */

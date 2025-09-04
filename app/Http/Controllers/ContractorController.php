@@ -12,24 +12,35 @@ class ContractorController extends Controller
     use AuthorizesRequests;
 
     /**
-     * List all contractors (admin and supervisors only)
+     * Register a new contractor (admin and supervisors)
      */
     public function registerContractor(Request $request)
     {
-        $this->authorize('viewAny', Contractor::class);
-        $user = $request->user();
-
-        if ($user->role_id == 1) { // Admin
-            $contractors = Contractor::with('users')->get();
-        } elseif ($user->role_id == 2) { // Supervisor
-            $contractors = Contractor::with('users')
-                ->where('franchise_id', $user->franchise_id)
-                ->get();
-        } else {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $authUser = $request->user();
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-         $contractor = Contractor::create($request->all());
+        $rules = [
+            'legal_name' => 'required|string|max:255',
+            'rif' => 'required|string|unique:contractors,rif|max:20',
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|unique:contractors,email|max:255',
+            'franchise_id' => 'required|exists:franchises,id',
+            'address' => 'required|string|max:255',
+        ];
+
+        $validated = Validator::make($request->all(), $rules)->validate();
+
+        // Supervisors can only create contractors in their own franchise
+        if ($authUser->role_id == 2 && $validated['franchise_id'] != $authUser->franchise_id) {
+            return response()->json([
+                'message' => 'You cannot create contractors in other franchises'
+            ], 403);
+        }
+
+        $contractor = Contractor::create($validated);
 
         return response()->json([
             'message' => 'Contractor created successfully',
@@ -38,43 +49,43 @@ class ContractorController extends Controller
     }
 
     /**
-     * Register a new contractor
+     * List all contractors (admin and supervisors only)
      */
     public function listContractor(Request $request)
     {
-        $this->authorize('create', Contractor::class);
-        $user = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'legal_name' => 'required|string|max:255',
-            'rif' => 'required|string|unique:contractors,rif|max:20',
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|unique:contractors,email|max:255',
-            'franchise_id' => 'required|exists:franchises,id',
-            'address' => 'required|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+        $authUser = $request->user();
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Supervisors can only create contractors in their own franchise
-        if ($user->role_id == 2 && $request->franchise_id != $user->franchise_id) {
-            return response()->json([
-                'message' => 'You cannot create contractors in other franchises'
-            ], 403);
+        if ($authUser->role_id == 1) { // Admin
+            $contractors = Contractor::with('users')->get();
+        } elseif ($authUser->role_id == 2) { // Supervisor
+            $contractors = Contractor::with('users')
+                ->where('franchise_id', $authUser->franchise_id)
+                ->get();
+        } else {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
+
+        return response()->json([
+            'message' => 'Contractors retrieved successfully',
+            'contractors' => $contractors
+        ], 200);
     }
-       
+
     /**
      * Show contractor details
      */
     public function detailsContractor(Request $request, $id)
     {
-        $contractor = Contractor::with('users')->findOrFail($id);
-        $this->authorize('view', $contractor);
-
+        $contractor = Contractor::with('users')->find($id);
+        if (!$contractor) {
+            return response()->json([
+                'message' => 'Contractor not found'
+            ], 404);
+        }
+    
         return response()->json([
             'message' => 'Contractor details retrieved successfully',
             'contractor' => $contractor
@@ -86,32 +97,45 @@ class ContractorController extends Controller
      */
     public function updateContractor(Request $request, $id)
     {
-        $contractor = Contractor::findOrFail($id);
-        $this->authorize('update', $contractor);
-
-        $validator = Validator::make($request->all(), [
-            'legal_name' => 'sometimes|required|string|max:255',
-            'rif' => 'sometimes|required|string|max:20|unique:contractors,rif,'.$id,
-            'name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20',
-            'email' => 'sometimes|required|email|max:255|unique:contractors,email,'.$id,
-            'franchise_id' => 'sometimes|required|exists:franchises,id',
-            'address' => 'sometimes|required|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+        $authUser = $request->user();
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $user = $request->user();
+        $contractor = Contractor::find($id);
+        if (!$contractor) {
+            return response()->json([
+                'message' => 'Contractor not found'
+            ], 404);
+        }
+
         // Supervisors can only update contractors in their own franchise
-        if ($user->role_id == 2 && $request->has('franchise_id') && $request->franchise_id != $user->franchise_id) {
+        if ($authUser->role_id == 2 && $contractor->franchise_id != $authUser->franchise_id) {
+            return response()->json([
+                'message' => 'You cannot update contractors in other franchises'
+            ], 403);
+        }
+
+        $rules = [
+            'legal_name' => 'sometimes|required|string|max:255',
+            'rif' => 'sometimes|required|string|max:20|unique:contractors,rif,' . $id,
+            'name' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:20',
+            'email' => 'sometimes|required|email|max:255|unique:contractors,email,' . $id,
+            'franchise_id' => 'sometimes|required|exists:franchises,id',
+            'address' => 'sometimes|required|string|max:255',
+        ];
+
+        $validated = Validator::make($request->all(), $rules)->validate();
+
+        // Supervisors cannot move contractors to other franchises
+        if ($authUser->role_id == 2 && array_key_exists('franchise_id', $validated) && $validated['franchise_id'] != $authUser->franchise_id) {
             return response()->json([
                 'message' => 'You cannot move contractors to other franchises'
             ], 403);
         }
 
-        $contractor->update($request->all());
+        $contractor->update($validated);
 
         return response()->json([
             'message' => 'Contractor updated successfully',
@@ -124,8 +148,24 @@ class ContractorController extends Controller
      */
     public function deleteContractor(Request $request, $id)
     {
-        $contractor = Contractor::findOrFail($id);
-        $this->authorize('delete', $contractor);
+        $authUser = $request->user();
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $contractor = Contractor::find($id);
+        if (!$contractor) {
+            return response()->json([
+                'message' => 'Contractor not found'
+            ], 404);
+        }
+
+        // Supervisors can only delete contractors in their own franchise
+        if ($authUser->role_id == 2 && $contractor->franchise_id != $authUser->franchise_id) {
+            return response()->json([
+                'message' => 'You cannot delete contractors in other franchises'
+            ], 403);
+        }
 
         // Verify no associated users exist
         if ($contractor->users()->count() > 0) {
@@ -142,11 +182,11 @@ class ContractorController extends Controller
     }
 
     //List contractors to process for register (public)
-    public function lisForRegistration(){
+    public function listForRegister(){
         $contractors = Contractor::select(
             'id', 'legal_name')->get(); 
             return response()->json([
-                'message' => 'Contractors list retrived successfully',
+                'message' => 'Contractors list retrieved successfully',
                 'contractors' => $contractors
             ], 200);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProspectAradial;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -13,14 +14,16 @@ class ProspectController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Register a new prospect (admin only)
+     * Register a new prospect 
      */
     public function registerProspect(Request $request)
     {
-        $this->authorize('create', ProspectAradial::class);
-        
+       
         $validated = $this->validateProspect($request);
-        $prospect = ProspectAradial::create($validated);
+        if(is_object($validated ) && $validated->fails()) {
+            return response()->json($validated->errors(), 400);
+        }
+        $prospect = ProspectAradial::create($request->all());
 
         return response()->json([
             'message' => 'Prospect created successfully',
@@ -33,11 +36,10 @@ class ProspectController extends Controller
      */
     public function listProspects(Request $request)
     {
-        $this->authorize('viewAny', ProspectAradial::class);
         $user = $request->user();
 
         $prospects = match((int)$user->role_id) {
-            1 => ProspectAradial::with('franchise')->get(),
+            1 => ProspectAradial::get(),
             2 => ProspectAradial::with('franchise')
                     ->where('franchise_id', $user->franchise_id)
                     ->get(),
@@ -59,39 +61,60 @@ class ProspectController extends Controller
      */
     public function prospectDetails(Request $request, $id)
     {
-        $prospect = ProspectAradial::with('franchise')->findOrFail($id);
-        $this->authorize('view', $prospect);
-
+        $prospect = ProspectAradial::where('id' , $id)->first();
+       if(empty($prospect)) {
+            return response()->json([
+            'message' => 'Prospect no exist'
+        ], 404);
+        }
         return response()->json([
             'message' => 'Prospect details retrieved successfully',
             'prospect' => $prospect
         ], 200);
+
     }
+
 
     /**
      * Update a prospect (admin only)
      */
     public function updateProspect(Request $request, $id)
-    {
-        $prospect = ProspectAradial::with('franchise')->findOrFail($id);
-        $this->authorize('update', $prospect);
+    { 
+        $prospect = ProspectAradial::where('id' , $id)->first();
+       
+        if(empty($prospect)) {
+            return response()->json([
+            'message' => 'Prospect no exist'
+        ], 404);
+        }
 
         $validated = $this->validateProspect($request, $prospect);
-        $prospect->update($validated);
+        
+        if(is_object($validated ) && $validated->fails()) {
+            return response()->json($validated->errors(), 422);
+        };
+
+        $validated = ProspectAradial::where(['id' => $id])->update(request()->all());
 
         return response()->json([
-            'message' => 'Prospect updated successfully',
-            'prospect' => $prospect->refresh()
-        ], 200);
-    }
+            'message' => 'Prospect update successfully',
+            'prospect' => $validated
+        ], 201);
+     }
+    
 
     /**
      * Delete a prospect (admin only)
      */
     public function deleteProspect(Request $request, $id)
     {
-        $prospect = ProspectAradial::findOrFail($id);
-        $this->authorize('delete', $prospect);
+         $prospect = ProspectAradial::where('id' , $id)->first();
+       
+        if(empty($prospect)) {
+            return response()->json([
+            'message' => 'Prospect no exist'
+        ], 404);
+    }
 
         $prospect->delete();
 
@@ -124,6 +147,14 @@ class ProspectController extends Controller
             'status_red' => 'nullable|string|max:50',
         ];
 
-        return Validator::make($request->all(), $rules)->validate();
+
+        
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return $validator;
+        }
+Log::info(print_r($validator->validate(),true));
+        return $validator->validate();
     }
 }

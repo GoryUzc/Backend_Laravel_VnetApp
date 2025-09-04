@@ -13,7 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JwtMiddleware::class,
-            'check.role' => \App\Http\Middleware\CheckRol::class,
+            'checkrole' => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        // El middleware CORS al grupo API
+        $middleware->group('api', [
+            \App\Http\Middleware\Cors::class,
         ]);
      })
      ->withExceptions(function ($exceptions) {

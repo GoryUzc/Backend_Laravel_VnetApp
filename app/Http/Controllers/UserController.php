@@ -14,20 +14,19 @@ class UserController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Register a new user (admin only)
+     * Register a new user
      */
     public function registerUser(Request $request)
     {
-        $this->authorize('create', User::class);
-
         $validated = $this->validateUser($request);
-        $validated['password'] = Hash::make($validated['password']);
 
+        $validated['password'] = Hash::make($validated['password']);
+        
         $user = User::create($validated);
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user->only('id', 'name', 'email', 'role_id', 'franchise_id', 'contractor_id')
+            'user' => $user
         ], 201);
     }
 
@@ -36,9 +35,13 @@ class UserController extends Controller
      */
     public function listUser(Request $request)
     {
-        $this->authorize('viewAny', User::class);
+        $authUser = $request->user();
         
-        $users = User::with(['franchise', 'role', 'contractor'])->get();
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $users = User::all();
 
         return response()->json([
             'message' => 'Users retrieved successfully',
@@ -51,8 +54,13 @@ class UserController extends Controller
      */
     public function detailsUser(Request $request, $id)
     {
-        $user = User::with(['franchise', 'role', 'contractor'])->findOrFail($id);
-        $this->authorize('view', $user);
+        $user = User::where('id' , $id)->first();
+        
+        if (empty($user)) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
 
         return response()->json([
             'message' => 'User details retrieved successfully',
@@ -65,8 +73,13 @@ class UserController extends Controller
      */
     public function updateUser(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-        $this->authorize('update', $user);
+        $user = User::where('id' , $id)->first();
+        
+        if (empty($user)) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
 
         $validated = $this->validateUser($request, $user);
 
@@ -80,7 +93,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->refresh()->load(['franchise', 'role', 'contractor'])
+            'user' => $user->refresh()
         ], 200);
     }
 
@@ -89,8 +102,13 @@ class UserController extends Controller
      */
     public function deleteUser(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-        $this->authorize('delete', $user);
+        $user = User::where('id' , $id)->first();
+        
+        if (empty($user)) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
 
         $user->delete();
 

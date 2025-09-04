@@ -16,12 +16,12 @@ return new class extends Migration
             $table->string('aradial_id')->unique();
             $table->string('name');
             $table->string('last_name');
-            $table->string('document')->unique();
+            $table->string('document');
             $table->string('document_type');
-            $table->string('phone')->unique();
+            $table->string('phone');
             $table->string('address');
             $table->string('city');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('plan');
             $table->string('status_red')->default('inactivo');
             $table->foreignId('franchise_id')->constrained('franchises');

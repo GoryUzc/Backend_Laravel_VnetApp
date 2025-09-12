@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Meeting extends Model {
     use HasFactory, Notifiable;
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'meeting';
+
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ProspectAradial;
 use Closure;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -10,8 +11,9 @@ use Firebase\JWT\SignatureInvalidException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class JwtMiddleware
+class JwtProspect
 {
+    
     public function handle(Request $request, Closure $next)
     {
         
@@ -38,7 +40,7 @@ class JwtMiddleware
         try {
             // Añadido el tercer parámetro con algoritmos permitidos
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
-        
+            
             // Validación de expiración
             $currentTime = time();
             if (isset($decoded->exp) && $currentTime > $decoded->exp) {
@@ -49,19 +51,20 @@ class JwtMiddleware
                 ], 401);
             }
             
-            $userId = $decoded->sub;
+            $prospectId = $decoded->sub;
             
-            $user = \App\Models\User::find($userId);
+            $prospect = ProspectAradial::find($prospectId);
             
-            if (!$user) {
+            if (!$prospect) {
                 return response()->json([
                     'message' => 'User not found',
                     'error' => 'unauthorized'
                 ], 401);
             }
             
-        
-           $request->attributes->add(['id' => $user]);
+          
+        //    $request->attributes->get('id')->id = $prospect;
+        //    log::info('id recibido:' . $prospect);
            
             return $next($request);
             

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class ProspectAradial extends Model
 {
@@ -16,12 +17,6 @@ class ProspectAradial extends Model
      */
     protected $table = 'prospect_aradial';
 
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'aradial_id';
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -54,6 +49,8 @@ class ProspectAradial extends Model
         'email',
         'plan',
         'status_red',
+        'otp',
+        'email_verified_at',
         'franchise_id',  // Added franchise_id to fillable
     ];
 

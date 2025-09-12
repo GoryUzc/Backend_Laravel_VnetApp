@@ -62,6 +62,7 @@ class ProspectController extends Controller
     public function prospectDetails(Request $request, $id)
     {
         $prospect = ProspectAradial::where('id' , $id)->first();
+        log::info(print_r($prospect,true));
        if(empty($prospect)) {
             return response()->json([
             'message' => 'Prospect no exist'

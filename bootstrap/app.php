@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JwtMiddleware::class,
             'checkrole' => \App\Http\Middleware\CheckRole::class,
+            'prospect.auth' => \App\Http\Middleware\JwtProspect::class,
         ]);
 
         // El middleware CORS al grupo API

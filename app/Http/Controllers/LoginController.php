@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contractor;
+use App\Models\ProspectAradial;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Franchises;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Log;
+use NunoMaduro\Collision\Adapters\Phpunit\Support\ResultReflection;
 
 class LoginController extends Controller
 {
@@ -52,7 +55,7 @@ class LoginController extends Controller
                 'expires_in' => 3600,
                 'id' => $user->id,
                 'role_id' => $user->role_id,
-                'franchise' => $user->franchise_id,
+                'franchise_id' => $user->franchise_id,
             ],
              200);
         } catch (\Exception $e) {
@@ -173,5 +176,89 @@ class LoginController extends Controller
                 'message' => 'Roles list retrived successfully',
                 'roles' => $roles
             ], 200);
+    }
+
+public function generateNumericString(){
+        return substr(str_shuffle('123456789'), 0, 4);
+    }
+
+    
+public function sendOtpToProspect(Request $request)
+{
+    $request->validate([
+        'document' => 'required|string',
+        'email' => 'required|email',
+    ]);
+
+    // Buscar prospecto por documento y correo
+    $prospect = ProspectAradial::where('document', $request->document)
+        ->where('email', $request->email)
+        ->first();
+
+    if (!$prospect) {
+        return response()->json(['error' => 'Prospect no exist'], 404);
+    }
+
+    // Generar OTP
+    $otp = $this->generateNumericString();
+
+    // Guardar OTP en la tabla
+    $prospect->otp = $otp;
+    $prospect->save();
+
+    // Enviar OTP por correo
+    Mail::send('email.otpProspect', ['otp' => $otp, 'prospect' => $prospect], function ($message) use ($prospect) {
+        $message->from(env('MAIL_FROM_ADDRESS'), 'VNET');
+        $message->to($prospect->email);
+        $message->subject('Your OTP code');
+    });
+
+    return response()->json([
+        'message' => 'OTP sent successfully',
+        'prospect_id' => $prospect->id
+    ], 200);
+}
+    public function verifyProspect(Request $request){
+    $request->validate([
+        'document' => 'required|string',
+        'email' => 'required|email',
+        'otp' => 'required|string',
+    ]);
+
+    // Buscar prospecto por documento y correo
+    $prospect = ProspectAradial::where('document', $request->document)
+        ->where('email', $request->email)
+        ->first();
+
+    if (!$prospect) {
+        return response()->json(['error' => 'Prospect no exist'], 404);
+    }
+
+     $key = env('JWT_SECRET');
+
+    if (!$key) {
+        return response()->json(['error' => 'Configuración JWT no disponible'], 500);
+        }
+
+    $payload = [
+        'iss' => 'laravel-jwt',
+        'sub' => $prospect->id,
+        'iat' => time(),
+        'exp' => time() + 3600, // 1 hora
+        'email' => $prospect->email,
+    ];
+
+    // Verificar OTP
+    if ($prospect->otp !== $request->otp) {
+        return response()->json(['error' => 'OTP invalyd'], 401);
+    }
+
+    return response()->json([
+        'message' => 'Prospect verified sussessfully',
+        'prospect' => $prospect->only('id'),
+        'token' => JWT::encode($payload, $key, 'HS256'),
+        'token_type' => 'bearer',
+        'expires_in' => 3600,
+    ], 200);
     }
 }

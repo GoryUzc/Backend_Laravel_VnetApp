@@ -24,8 +24,10 @@ return new class extends Migration
             $table->string('email');
             $table->string('plan');
             $table->string('status_red')->default('inactivo');
+            $table->string('otp')->nullable();
             $table->foreignId('franchise_id')->constrained('franchises');
-            $table->timestamps();    
+            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamps();  
         });
     }
 

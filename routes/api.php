@@ -24,13 +24,13 @@ Route::prefix('/v1')->group(function () {
     Route::post('/prospect/verify-email', [LoginController::class, 'verifyProspect'])->name('api.prospects.verify-email');
     Route::post('/prospect/send-otp', [LoginController::class, 'sendOtpToProspect'])->name('api.prospects.send-otp');
 
-    //Ruta para consultar prospecto por Id
+    //Ruta para consultar prospecto por Id y crear citas 
     Route::get('/prospect/detail/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show')->middleware('prospect.auth');
-    Route::post('/meeting/create', [MeetingController::class, 'createMeeting'])->name('api.meeting.create')->middleware('prospect.auth');
+    Route::post('/meeting/create', [MeetingController::class, 'registerMeeting'])->name('api.meeting.create')->middleware('prospect.auth');
 
     // CRUD de citas protegidas por JWT 
     Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->name('api.meetings.index')->middleware('jwt.auth');
-    Route::post('/meetings/create', [MeetingController::class, 'createMeeting'])->name('api.meetings.create')->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
+    Route::post('/meetings/create', [MeetingController::class, 'registerMeeting'])->name('api.meetings.create')->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/detail/{id}', [MeetingController::class, 'meetingDetails'])->name('api.meetings.show')->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
     Route::put('/meetings/update/{id}', [MeetingController::class, 'updateMeeting'])->name('api.meetings.update')->middleware( 'jwt.auth', 'checkrole:1');
     Route::delete('/meetings/delete/{id}', [MeetingController::class, 'deleteMeeting'])->name('api.meetings.delete')->middleware('jwt.auth', 'checkrole:1');

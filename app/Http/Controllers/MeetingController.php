@@ -130,15 +130,14 @@ class MeetingController extends Controller
     /**
      * Validate prospect data
      */
-    private function validateProspect(Request $request, $prospect = null)
+    private function validateMeeting(Request $request, $prospect = null)
     {
         $rules = [
-        'prospect_aradial_id' => 'required|exists:prospect_aradial, id',
-        'user_id' => 'nullable|exists:users, id',
-        'date_time1'=> 'requiered|datetime',
-        'date_time2' => 'required|datetime|after:date_time1' ,
-        'latitude' => 'required|numeric|beetween:90,-90', 
-        'longitude' => 'requiered|numeric|beetween:180,-180',
+        'prospect_aradial_id' => 'required|exists:prospect_aradial,id',
+        'user_id' => 'nullable|exists:users,id',
+        'date_time1'=> 'required|date',
+        'latitude' => 'required|numeric', 
+        'longitude' => 'required|numeric',
         ];
 
 

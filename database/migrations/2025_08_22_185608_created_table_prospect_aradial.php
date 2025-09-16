@@ -13,7 +13,7 @@ return new class extends Migration
     {
         schema::create('prospect_aradial', function (Blueprint $table){
             $table->id();
-            $table->string('aradial_id')->unique();
+            $table->string('aradial_id');
             $table->string('name');
             $table->string('last_name');
             $table->string('document');

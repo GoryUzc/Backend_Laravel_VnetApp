@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class ProspectAradial extends Model
 {
@@ -59,6 +58,6 @@ class ProspectAradial extends Model
      */
     public function franchise()
     {
-        return $this->belongsTo(\App\Models\Franchises::class);
+        return $this->belongsTo(Franchises::class);
     }
 }

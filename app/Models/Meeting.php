@@ -29,7 +29,6 @@ class Meeting extends Model {
         'prospect_aradial_id',
         'user_id',
         'date_time1',
-        'date_time2',
         'status',
         'latitude',
         'longitude',

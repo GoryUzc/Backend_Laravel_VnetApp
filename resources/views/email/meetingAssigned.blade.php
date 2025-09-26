@@ -4,7 +4,7 @@
     <title>Cita asignada con exito</title>
 </head>
 <body>
-     <p>Hola <strong>{{ $data['clienteNombre'] }}</strong>,</p>
+    <title> <p>Hola <strong>{{ $data['clienteNombre'] }}</strong>,</p>
 
         <p>Te informamos que tu cita de instalación ha sido asignada con éxito. Aquí están los detalles:</p>
 

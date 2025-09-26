@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Log;
-use NunoMaduro\Collision\Adapters\Phpunit\Support\ResultReflection;
 
 class LoginController extends Controller
 {
@@ -210,7 +209,7 @@ public function sendOtpToProspect(Request $request)
     Mail::send('email.otpProspect', ['otp' => $otp, 'prospect' => $prospect], function ($message) use ($prospect) {
         $message->from(env('MAIL_FROM_ADDRESS'), 'VNET');
         $message->to($prospect->email);
-        $message->subject('Your OTP code');
+        $message->subject('Codigo de Verificacion');
     });
 
     return response()->json([

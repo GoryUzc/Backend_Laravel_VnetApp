@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ProspectAradial;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -14,21 +13,33 @@ class ProspectController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Register a new prospect 
+     * Register a new prospect
      */
     public function registerProspect(Request $request)
     {
-       
-        $validated = $this->validateProspect($request);
-        if(is_object($validated ) && $validated->fails()) {
-            return response()->json($validated->errors(), 400);
-        }
-        $prospect = ProspectAradial::create($request->all());
+        $validator = $this->validateProspect($request);
 
-        return response()->json([
-            'message' => 'Prospect created successfully',
-            'prospect' => $prospect
-        ], 201);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validatedData = $validator->validated();
+
+        try {
+            $prospect = ProspectAradial::create($validatedData);
+
+            return response()->json([
+                'message' => 'Prospect created successfully',
+                'prospect' => $prospect
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -38,90 +49,111 @@ class ProspectController extends Controller
     {
         $user = $request->user();
 
+        if (!in_array($user->role_id, [1, 2])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+
         $prospects = match((int)$user->role_id) {
             1 => ProspectAradial::get(),
-            2 => ProspectAradial::with('franchise')
+            2, 3, 4 => ProspectAradial::with('franchise')
                     ->where('franchise_id', $user->franchise_id)
                     ->get(),
             default => null
         };
-
-        if (!$prospects) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json([
+                'message' => 'Prospects retrieved successfully',
+                'prospects' => $prospects
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Prospects retrieved successfully',
-            'prospects' => $prospects
-        ], 200);
     }
 
     /**
-     * Get prospect details (admin and supervisors of the same franchise)
+     * Get prospect details
      */
     public function prospectDetails(Request $request, $id)
     {
-        $prospect = ProspectAradial::where('id' , $id)->first();
-        log::info(print_r($prospect,true));
-       if(empty($prospect)) {
+        $prospect = ProspectAradial::find($id);
+
+        if (!$prospect) {
             return response()->json([
-            'message' => 'Prospect no exist'
-        ], 404);
+                'message' => 'Prospect does not exist'
+            ], 404);
         }
+
         return response()->json([
             'message' => 'Prospect details retrieved successfully',
             'prospect' => $prospect
         ], 200);
-
     }
 
-
     /**
-     * Update a prospect (admin only)
+     * Update a prospect
      */
     public function updateProspect(Request $request, $id)
-    { 
-        $prospect = ProspectAradial::where('id' , $id)->first();
-       
-        if(empty($prospect)) {
+    {
+        $prospect = ProspectAradial::find($id);
+
+        if (!$prospect) {
             return response()->json([
-            'message' => 'Prospect no exist'
-        ], 404);
+                'message' => 'Prospect does not exist'
+            ], 404);
         }
 
-        $validated = $this->validateProspect($request, $prospect);
-        
-        if(is_object($validated ) && $validated->fails()) {
-            return response()->json($validated->errors(), 422);
-        };
+        $validator = $this->validateProspect($request, $prospect);
 
-        $validated = ProspectAradial::where(['id' => $id])->update(request()->all());
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Prospect update successfully',
-            'prospect' => $validated
-        ], 201);
-     }
-    
+        $validatedData = $validator->validated();
+
+        try {
+            $prospect->update($validatedData);
+
+            return response()->json([
+                'message' => 'Prospect updated successfully',
+                'prospect' => $prospect
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
-     * Delete a prospect (admin only)
+     * Delete a prospect
      */
     public function deleteProspect(Request $request, $id)
     {
-         $prospect = ProspectAradial::where('id' , $id)->first();
-       
-        if(empty($prospect)) {
+        $prospect = ProspectAradial::find($id);
+
+        if (!$prospect) {
             return response()->json([
-            'message' => 'Prospect no exist'
-        ], 404);
-    }
+                'message' => 'Prospect does not exist'
+            ], 404);
+        }
 
-        $prospect->delete();
+        try {
+            $prospect->delete();
 
-        return response()->json([
-            'message' => 'Prospect deleted successfully'
-        ], 200);
+            return response()->json([
+                'message' => 'Prospect deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -148,14 +180,6 @@ class ProspectController extends Controller
             'status_red' => 'nullable|string|max:50',
         ];
 
-
-        
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            return $validator;
-        }
-Log::info(print_r($validator->validate(),true));
-        return $validator->validate();
+        return Validator::make($request->all(), $rules);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contractor;
+use Illuminate\Auth\Events\Validated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -31,7 +32,15 @@ class ContractorController extends Controller
             'address' => 'required|string|max:255',
         ];
 
-        $validated = Validator::make($request->all(), $rules)->validate();
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+         }
+
+         $validated = $validator->validated();
 
         // Supervisors can only create contractors in their own franchise
         if ($authUser->role_id == 2 && $validated['franchise_id'] != $authUser->franchise_id) {
@@ -64,6 +73,7 @@ class ContractorController extends Controller
             $contractors = Contractor::with('users')
                 ->where('franchise_id', $authUser->franchise_id)
                 ->get();
+                // ->paginate(20);
         } else {
             return response()->json(['message' => 'Forbidden'], 403);
         }
@@ -126,12 +136,14 @@ class ContractorController extends Controller
             'address' => 'sometimes|required|string|max:255',
         ];
 
-        $validated = Validator::make($request->all(), $rules)->validate();
+        $validator = Validator::make($request->all(), $rules);
 
-        // Supervisors cannot move contractors to other franchises
-        if ($authUser->role_id == 2 && array_key_exists('franchise_id', $validated) && $validated['franchise_id'] != $authUser->franchise_id) {
+        $validated = validator()->$validator;
+
+        // Supervisors can only create contractors in their own franchise
+        if ($authUser->role_id == 2 && $validated['franchise_id'] != $authUser->franchise_id) {
             return response()->json([
-                'message' => 'You cannot move contractors to other franchises'
+                'message' => 'You cannot create contractors in other franchises'
             ], 403);
         }
 
@@ -146,8 +158,7 @@ class ContractorController extends Controller
     /**
      * Delete a contractor
      */
-    public function deleteContractor(Request $request, $id)
-    {
+    public function deleteContractor(Request $request, $id) {
         $authUser = $request->user();
         if (!$authUser) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -174,11 +185,16 @@ class ContractorController extends Controller
             ], 400);
         }
 
-        $contractor->delete();
-
-        return response()->json([
+        $delete = $contractor->delete();
+        if ($delete) {
+            return response()->json([
             'message' => 'Contractor deleted successfully'
-        ], 200);
+             ], 200);
+        } else {
+            return response()->json([
+            'error' => 'Failed to delete contractor'
+            ], 500);
+        }
     }
 
     //List contractors to process for register (public)

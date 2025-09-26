@@ -41,7 +41,6 @@ class Meeting extends Model {
     protected  $casts = [
 
             'date_time1' => 'datetime',
-            'date_time2' => 'datetime',
             'latitude' => 'decimal:8',
             'longitude' => 'decimal:8',
         ];
@@ -57,7 +56,7 @@ class Meeting extends Model {
     /**
      * Relacion: Una reunión pertenece a un prospecto Aradial.
      */
-    public function prospectAradial(): BelongsTo
+    public function prospect_aradial(): BelongsTo
     {
         return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
     }

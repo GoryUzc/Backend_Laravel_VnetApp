@@ -16,19 +16,27 @@ class UserController extends Controller
     /**
      * Register a new user
      */
-    public function registerUser(Request $request)
-    {
-        $validated = $this->validateUser($request);
+   public function registerUser(Request $request)
+{
+    $validator = $this->validateUser($request);
 
-        $validated['password'] = Hash::make($validated['password']);
-        
-        $user = User::create($validated);
-
+    if ($validator->fails()) {
         return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user
-        ], 201);
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
     }
+
+    $validated = $validator->validated();
+    $validated['password'] = Hash::make($validated['password']);
+    
+    $user = User::create($validated);
+
+    return response()->json([
+        'message' => 'User created successfully',
+        'user' => $user
+    ], 201);
+}
 
     /**
      * List all users (admin only)
@@ -71,31 +79,37 @@ class UserController extends Controller
     /**
      * Update a user (admin only)
      */
-    public function updateUser(Request $request, $id)
-    {
-        $user = User::where('id' , $id)->first();
-        
-        if (empty($user)) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
-
-        $validated = $this->validateUser($request, $user);
-
-        if ($request->filled('password')) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        $user->update($validated);
-
-        return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user->refresh()
-        ], 200);
+   public function updateUser(Request $request, $id){
+    $user = User::find($id); // ← Más limpio
+    
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
     }
+
+    $validator = $this->validateUser($request, $user);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $validated = $validator->validated();
+
+    if ($request->filled('password')) {
+        $validated['password'] = Hash::make($validated['password']);
+    } else {
+        unset($validated['password']);
+    }
+
+    $user->update($validated);
+
+    return response()->json([
+        'message' => 'User updated successfully',
+        'user' => $user->refresh()
+    ], 200);
+}
 
     /**
      * Delete a user (admin only)
@@ -110,11 +124,15 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->delete();
+       $delete = $user->delete();
 
+        if ($delete) {
         return response()->json([
-            'message' => 'User deleted successfully'
+            'message'=>'User delete successfully'
         ], 200);
+            } else {
+         return response()->json(['error' => 'Failed to delete user'], 500);
+             }
     }
 
     /**
@@ -149,6 +167,6 @@ class UserController extends Controller
             'password' => $user ? 'nullable|string|min:8' : 'required|string|min:8',
         ];
 
-        return Validator::make($request->all(), $rules)->validate();
+        return Validator::make($request->all(), $rules);
     }
 }

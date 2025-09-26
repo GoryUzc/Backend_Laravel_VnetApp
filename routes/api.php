@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Middleware\JwtMiddleware;
+use App\Http\Controllers\InstallationOrderController;
+use App\Models\InstallationOrder;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProspectController;
@@ -12,48 +13,62 @@ use App\Http\Controllers\MeetingController;
 Route::prefix('/v1')->group(function () {
     
     // Rutas públicas
-    Route::get('/testmail', [LoginController::class, 'testmail']);
-    Route::post('/login', [LoginController::class, 'login'])->name('api.login');
-    Route::post('/register', [LoginController::class, 'register'])->name('api.register');
-    Route::get('/franchises/list', [LoginController::class, 'listFranchisesUser'])->name('api.franchises.list');
-    Route::get('/contractor/list', [ContractorController::class,'listForRegister'])->name('api.contractors.list');
-    Route::get('/roles/list', [LoginController::class, 'listRoleUser'])->name('api.role.list');
+    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/register', [LoginController::class, 'register']);
+    Route::get('/franchises/list', [LoginController::class, 'listFranchisesUser']);
+    Route::get('/contractor/list', [ContractorController::class,'listForRegister']);
+    Route::get('/roles/list', [LoginController::class, 'listRoleUser']);
     
-    
-    // Rutas para login t verificacion de correo OTP prospectos
-    Route::post('/prospect/verify-email', [LoginController::class, 'verifyProspect'])->name('api.prospects.verify-email');
-    Route::post('/prospect/send-otp', [LoginController::class, 'sendOtpToProspect'])->name('api.prospects.send-otp');
+    // RUTAS PROSPECTOS
+
+    // Rutas para login  de verificacion de correo OTP prospectos
+    Route::post('/prospect/verify-email', [LoginController::class, 'verifyProspect']);
+    Route::post('/prospect/send-otp', [LoginController::class, 'sendOtpToProspect']);
 
     //Ruta para consultar prospecto por Id y crear citas 
-    Route::get('/prospect/detail/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show')->middleware('prospect.auth');
-    Route::post('/meeting/create', [MeetingController::class, 'registerMeeting'])->name('api.meeting.create')->middleware('prospect.auth');
+    Route::get('/prospect/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('prospect.auth');
+    Route::post('/meeting/create', [MeetingController::class, 'registerMeeting'])->middleware('prospect.auth');
 
-    // CRUD de citas protegidas por JWT 
-    Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->name('api.meetings.index')->middleware('jwt.auth');
-    Route::post('/meetings/create', [MeetingController::class, 'registerMeeting'])->name('api.meetings.create')->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
-    Route::get('/meetings/detail/{id}', [MeetingController::class, 'meetingDetails'])->name('api.meetings.show')->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
-    Route::put('/meetings/update/{id}', [MeetingController::class, 'updateMeeting'])->name('api.meetings.update')->middleware( 'jwt.auth', 'checkrole:1');
-    Route::delete('/meetings/delete/{id}', [MeetingController::class, 'deleteMeeting'])->name('api.meetings.delete')->middleware('jwt.auth', 'checkrole:1');
+    // RUTAS PROTEGIDAS jwt y role
+
+    // CRUD de citas 
+    Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->middleware('jwt.auth','checkrole:1,2,3,4');
+    Route::get('/meetings/list/unassigned', [MeetingController::class, 'listMeetingUnassigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::get('/meetings/list/assigned', [MeetingController::class, 'listAllMeetingAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::post('/meetings/create', [MeetingController::class, 'registerMeeting'])->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
+    Route::get('/meetings/detail/{id}', [MeetingController::class, 'detailsMeeting'])->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
+    Route::put('/meetings/update/{id}', [MeetingController::class, 'updateMeeting'])->middleware( 'jwt.auth', 'checkrole:1');
+    Route::delete('/meetings/delete/{id}', [MeetingController::class, 'deleteMeeting'])->middleware('jwt.auth', 'checkrole:1');
     
-    
-   
         
     // CRUD de Prospectos
-    Route::post('/prospects/create', [ProspectController::class, 'registerProspect'])->name('api.prospects.create')->middleware('jwt.auth','checkrole:1');
-    Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->name('api.prospects.index')->middleware('jwt.auth','checkrole:1,2');
-    Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->name('api.prospects.show')->middleware('jwt.auth','checkrole:1,2');
-    Route::put('/prospects/update/{id}', [ProspectController::class, 'updateProspect'])->name('api.prospects.update')->middleware('jwt.auth','checkrole:1');
-    Route::delete('/prospects/delete/{id}', [ProspectController::class, 'deleteProspect'])->name('api.prospects.delete')->middleware('jwt.auth','checkrole:1');
+    Route::post('/prospects/create', [ProspectController::class, 'registerProspect'])->middleware('jwt.auth','checkrole:1');
+    Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->middleware('jwt.auth','checkrole:1,2');
+    Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('jwt.auth','checkrole:1,2');
+    Route::put('/prospects/update/{id}', [ProspectController::class, 'updateProspect'])->middleware('jwt.auth','checkrole:1');
+    Route::delete('/prospects/delete/{id}', [ProspectController::class, 'deleteProspect'])->middleware('jwt.auth','checkrole:1');
+
+
     // CRUD de Usuarios
-    Route::post('/users/create', [UserController::class, 'registerUser'])->name('api.users.create')->middleware('jwt.auth','checkrole:1');
-    Route::get('/users/list', [UserController::class, 'listUser'])->name('api.users.index')->middleware('jwt.auth','checkrole:1');
-    Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->name('api.users.show')->middleware('jwt.auth','checkrole:1');
-    Route::put('/users/update/{id}', [UserController::class, 'updateUser'])->name('api.users.update')->middleware('jwt.auth','checkrole:1,2,3');
-    Route::delete('/users/delete/{id}', [UserController::class, 'deleteUser'])->name('api.users.delete')->middleware('jwt.auth','checkrole:1,2,3');
+    Route::post('/users/create', [UserController::class, 'registerUser'])->middleware('jwt.auth','checkrole:1');
+    Route::get('/users/list', [UserController::class, 'listUser'])->middleware('jwt.auth','checkrole:1');
+    Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->middleware('jwt.auth','checkrole:1');
+    Route::put('/users/update/{id}', [UserController::class, 'updateUser'])->middleware('jwt.auth','checkrole:1,2,3,4');
+    Route::delete('/users/delete/{id}', [UserController::class, 'deleteUser'])->middleware('jwt.auth','checkrole:1,2,3');
+
+
     //CRUD Contratistas
-    Route::post('/contractors/create', [ContractorController::class, 'registerContractor'])->name('api.contractors.create')->middleware('jwt.auth','checkrole:1,2');
-    Route::get('/contractors/list', [ContractorController::class, 'listContractor'])->name('api.contractors.index')->middleware('jwt.auth','checkrole:1,2');
-    Route::get('/contractors/detail/{id}', [ContractorController::class, 'detailsContractor'])->name('api.contractors.show')->middleware('jwt.auth','checkrole:1,2,3');
-    Route::put('/contractors/update/{id}', [ContractorController::class, 'updateContractor'])->name('api.contractors.update')->middleware('jwt.auth','checkrole:1,2,3');
-    Route::delete('/contractors/delete/{id}', [ContractorController::class, 'deleteContractor'])->name('api.contractors.delete')->middleware('jwt.auth','checkrole:1');
+    Route::post('/contractors/create', [ContractorController::class, 'registerContractor'])->middleware('jwt.auth','checkrole:1,2');
+    Route::get('/contractors/list', [ContractorController::class, 'listContractor'])->middleware('jwt.auth','checkrole:1,2');
+    Route::get('/contractors/detail/{id}', [ContractorController::class, 'detailsContractor'])->middleware('jwt.auth','checkrole:1,2,3');
+    Route::put('/contractors/update/{id}', [ContractorController::class, 'updateContractor'])->middleware('jwt.auth','checkrole:1,2,3');
+    Route::delete('/contractors/delete/{id}', [ContractorController::class, 'deleteContractor'])->middleware('jwt.auth','checkrole:1');
+
+    // CRUD orden de installation 
+    Route::post('/orders/create', [InstallationOrderController::class, 'registerOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::get('/orders/list', [InstallationOrderController::class, 'listOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3');
+    Route::get('/orders/detail/{id}', [InstallationOrderController::class, 'detailOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::put('/orders/update/{id}', [InstallationOrderController::class, 'updateOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::delete('/orders/delete/{id}', [InstallationOrderController::class, 'deleteOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     });
+    

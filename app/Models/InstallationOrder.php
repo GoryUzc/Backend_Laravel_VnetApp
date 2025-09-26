@@ -93,7 +93,7 @@ class InstallationOrder extends Model
     /**
      * Get the prospect Aradial associated with the installation order.
      */
-    public function prospectAradial(): BelongsTo
+    public function prospect_aradial(): BelongsTo
     {
         return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
     }

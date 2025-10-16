@@ -77,7 +77,7 @@ class InstallationOrderController extends Controller {
             ], 403);
     }
 
-    // Filtros opcionales (puedes agregar más según necesites)
+    // Filtros opcionales
     // if ($request->filled('status')) {
     //     $query->where('status', $request->status);
     // }
@@ -172,6 +172,40 @@ class InstallationOrderController extends Controller {
         } else {
             return response()->json([
                 'error' => 'Failed to delete Order'
+            ], 500);
+        }
+    }
+
+    public function uploadSignature(Request $request, $id){
+        // Validar que el archivo sea un imagen
+        $request->validate([
+            'signature' => 'required|image|mimes:png,jpg,jpeg|max2048', //Max 2MB
+        ]);
+
+        try{
+
+        $order = InstallationOrder::find($id);
+        if(!$order){
+            return response()->json([
+                'message' => 'Order no found',
+            ]);
+            }
+            // Delete previous signature if exist
+            if ($order->signature_path) {
+                Storage::delete(InstallationOrder::find($id)->signature_path);
+            }
+
+            // Save new signature 
+            $paht = $request->file('signature')->Storage('signatures', 'public');
+            $order->update(['signature_path' => $paht]);
+
+            return response()-> json([
+                'message' => 'Signature uploaded successfully',
+                'signature_url' => $order->signature_url,
+            ], 200);  
+        }catch(Exception $e){
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
             ], 500);
         }
     }

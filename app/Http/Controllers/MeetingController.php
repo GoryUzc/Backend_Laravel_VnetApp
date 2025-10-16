@@ -86,9 +86,8 @@ class MeetingController extends Controller {
 
         $meetings = match((int)$user->role_id) {
             1 => Meeting::get(),
-            2, 3, 4 => Meeting::with('franchise')
-                    ->where('franchise_id', $user->franchise_id)
-                    ->get(),
+            2, 3, 4 => Meeting::where('franchise_id', $user->franchise_id)->get(), // Usuarios con roles 2,3,4: Solo reuniones de su franquicia. 
+        
             default => null
         };
 
@@ -110,9 +109,7 @@ class MeetingController extends Controller {
         $user = $request->user();
         $meetings = match ((int)$user->role_id) {
             1 => Meeting::whereNull('user_id')->get(),
-            2,3,4 => Meeting::with('franchise')
-            ->where('franchise_id', $user->franchise_id)
-            ->whereNull('user_id')->get(),
+            2, 3, 4 => Meeting::whereNull('user_id')->where('franchise_id', $user->franchise_id)->get(), 
             default => null
         };
          if (!$meetings) {
@@ -131,13 +128,13 @@ class MeetingController extends Controller {
     public function listAllMeetingAssigned(Request $request){
         $user = $request->user();
         $meetings = match((int)$user->role_id){
-            1 => Meeting::where('user_id')->get(),
-            2,3,4 => Meeting::with('franchise')
+            1 => Meeting::whereNotNull('user_id')->get(),
+            2 => Meeting::with('franchise')
             ->where('franchise_id', $user->franchise_id)
-            ->where('user_id')->get(),
+            ->whereNotNull('user_id')->get(),
             default => null
         };
-         if (!$meetings) {
+        if (!$meetings) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -147,13 +144,28 @@ class MeetingController extends Controller {
         ], 200);
     }
 
+    public function listMeetingUserAssigned(Request $request) {
+        $user = $request->user();
+        $meetings = Meeting::where('user_id', $user->id)
+        ->where('status', 'assigned')
+        ->get();
+        if(!$meetings){ 
+            return response()->json([ 'message' => 'User without installations'], 401);
+        } else {
+            return response()->json([
+            'message' => 'Meeting retrieved successfully',
+            'meetings' => $meetings
+        ], 200);
+        }
+    }
+
     /**
      * Get meeting details
      */
     public function detailsMeeting(Request $request, $id)
     {
         $meeting = Meeting::where('id' , $id)->first();
-       if(empty($meeting)) {
+        if(empty($meeting)) {
             return response()->json([
             'message' => 'Prospect no exist'
         ], 404);
@@ -231,16 +243,13 @@ class MeetingController extends Controller {
         }     
     }
 
-   public function takeMeeting(Request $request)
-{
+public function takeMeeting(Request $request, $id){
+
     // Validar entrada
-    $request->validate([
-        'meeting_id' => 'required|exists:meetings,id',
-        'user_id' => 'required|exists:users,id',
-    ]);
+   $user = $request->user();
 
     // Obtener la orden
-    $meeting = Meeting::findOrFail($request->meeting_id);
+    $meeting = Meeting::findOrFail($id);
 
     // Verificar que no esté ya tomada
     if ($meeting->user_id !== null) {
@@ -249,9 +258,8 @@ class MeetingController extends Controller {
         ], 409);
     }
 
-    // Obtener el usuario y su rol
-    $user = User::findOrFail($request->user_id);
-    $roleId = $user->role_id; // Asume que el campo se llama "role_id". Cámbialo si es diferente.
+    // Obtener el rol;
+    $roleId = $user->role_id; 
 
     // Definir rango de conflicto (±1 hora)
     $targetDateTime = $meeting->date_time1;
@@ -273,7 +281,7 @@ class MeetingController extends Controller {
 
         $meeting->update([
             'user_id' => $user->id,
-            'status' => 'assigned',
+            'status' => 'asignada',
         ]);
 
         //Enviar correo al cliente 
@@ -282,7 +290,7 @@ class MeetingController extends Controller {
         return response()->json([
             'message' => 'Orden tomada con éxito.',
             'meeting' => $meeting
-        ], 200);
+        ], 201);
     }
 
     if ($roleId == 3) {
@@ -304,7 +312,7 @@ class MeetingController extends Controller {
 
         $meeting->update([
             'user_id' => $user->id,
-            'status' => 'assigned',
+            'status' => 'asignada',
         ]);
 
         $this->SendEmailTakeMeeting($meeting, $user);
@@ -312,30 +320,30 @@ class MeetingController extends Controller {
         return response()->json([
             'message' => 'Order taken successfully.',
             'meeting' => $meeting
-        ], 200);
+        ], 201);
     }
 
     return response()->json([
-        'error' => 'Tu rol no tiene permiso para tomar órdenes de instalación.'
+        'error' => 'Your role does not have permission to take installation orders.'
     ], 403);
 }
 
-    private function SendEmailTakeMeeting($meeting, $assignedUser){
-        //Obtener al prospecto a traves del aradial_prospect_id 
-        $prospect = ProspectAradial::find($meeting->prospect_aradial_id);
-        if (!$prospect || $prospect->email){
-             return response()->json([
-                'error' => 'Cannot send email: client without email. Prospect ID: {$meeting->prospect_aradial_id}'
-            ], 403); 
-        }
-        //Datos para la vista del correo
-        $emailData = [
+private function SendEmailTakeMeeting($meeting, $assignedUser){
+     //Obtener al prospecto a traves del aradial_prospect_id 
+    $prospect = ProspectAradial::find($meeting->prospect_aradial_id);
+    if (!$prospect || !$prospect->email){
+        return response()->json([
+            'error' => 'Cannot send email: client without email. Prospect ID: {$meeting->prospect_aradial_id}'
+        ], 403); 
+    }
+    //Datos para la vista del correo
+    $emailData = [
         'clienteNombre' => $prospect->name . ' ' . ($prospect->last_name ?? ''),
         'fechaHora' => $meeting->date_time1->format('d/m/Y \a \l\a\s H:i'),
         'tecnicoNombre' => $assignedUser->name . ' ' . ($assignedUser->last_name ?? ''),
         'telefonoTecnico' => $assignedUser->phone ?? 'No disponible',
-        'direccion' => $meeting->address ?? 'Dirección no especificada',
-    ]; 
+        'direccion' => $prospect->address ?? 'Dirección no especificada',
+        ]; 
     try {
         
         Mail::send('email.meetingAssigned', $emailData, function ($message) use ($prospect) {
@@ -343,9 +351,9 @@ class MeetingController extends Controller {
         $message->to($prospect->email);
         $message->subject('Cita Asignada con exito - VNET');
         });
-        \log::info("Correo enviado al ciente: {$prospect->email} para la orden ID: {$meeting->id}");
+        Log::info("Correo enviado al ciente:" . $prospect->email . "para la orden ID:" . $meeting->id);
     } catch(Exception $e){
-        log::error("Error enviar el correo al cliente" . $e->getMessage());
+        Log::error("Error enviar el correo al cliente " . $e->getMessage());
     }
 }
 
@@ -361,6 +369,7 @@ class MeetingController extends Controller {
         'prospect_aradial_id' => 'required|exists:prospect_aradial,id',
         'user_id' => 'nullable|exists:users,id',
         'date_time1'=> 'required|date_format:Y-m-d H:i:s',
+        'franchise_id'=> 'required|exists:franchises,id',
         'latitude' => 'required|numeric', 
         'longitude' => 'required|numeric',
         ]);

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('observation_meeting', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('prospect_aradial_id')->constrained('prospect_aradial')->onDelete('cascade');
-            $table->foreignId('meeting_id')->constrained('meeting')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->nullable();
+            $table->foreignId('prospect_aradial_id')->constrained('prospect_aradial')->onDelete('cascade')->nullable();
+            $table->foreignId('meeting_id')->constrained('meetings')->onDelete('cascade')->nullable();
             $table->string('status_meeting'); 
             $table->timestamps();
         });

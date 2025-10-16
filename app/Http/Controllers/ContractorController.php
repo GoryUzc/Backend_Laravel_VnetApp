@@ -206,4 +206,20 @@ class ContractorController extends Controller
                 'contractors' => $contractors
             ], 200);
     }
+
+    // List de workers of contractor 
+    public function listworkerscontractor(Request $request){
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$user->contractor){
+            return response()->json(['message' => 'The user is not associated with any contractor'], 404);
+        }
+        $workers = $user->contractor->users()->where('role_id', 4)->get();
+        return response()->json([
+            'message' => 'Workers retrieved successfully',
+            'workers' => $workers
+        ], 200);
+    }
 }

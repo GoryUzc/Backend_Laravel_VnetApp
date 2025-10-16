@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('meeting', function (Blueprint $table) {
+        Schema::create('meetings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('prospect_aradial_id')->constrained('prospect_aradial')->onDelete('cascade'); 
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->nullable();
             $table->dateTime('date_time1')->nullable();
-            $table->string('status')->default('pending'); 
+            $table->foreignId('franchise_id')->constrained('franchises')->onDelete('cascade');
+            $table->string('status')->default('No_asignada'); 
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
+            $table->timestamps();
         }); 
 
     }

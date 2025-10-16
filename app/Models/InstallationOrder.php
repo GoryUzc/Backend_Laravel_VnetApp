@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Meeting;
 use App\Models\ProspectAradial;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class InstallationOrder extends Model
 {
@@ -50,7 +51,8 @@ class InstallationOrder extends Model
         'puerto_olt',
         'etiqueta_cliente',
         'router',
-        'detalles_instalacion'
+        'detalles_instalacion',
+        'signature_paht',
     ];
     /**
      * The attributes that should be cast.
@@ -96,5 +98,11 @@ class InstallationOrder extends Model
     public function prospect_aradial(): BelongsTo
     {
         return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
+    }
+
+    public function getSignatureUrlAtribute(){
+        return $this->signature_paht
+        ? Storage::url($this->signature_paht)
+        : null;
     }
 }

@@ -49,10 +49,6 @@ class ProspectController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role_id, [1, 2])) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         try {
 
         $prospects = match((int)$user->role_id) {

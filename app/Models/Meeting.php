@@ -17,7 +17,7 @@ class Meeting extends Model {
      *
      * @var string
      */
-    protected $table = 'meeting';
+    protected $table = 'meetings';
 
 
     /**
@@ -29,9 +29,11 @@ class Meeting extends Model {
         'prospect_aradial_id',
         'user_id',
         'date_time1',
+        'franchise_id',
         'status',
         'latitude',
         'longitude',
+    
     ];
     /**
      * The attributes that should be cast.
@@ -53,6 +55,16 @@ class Meeting extends Model {
         return $this->belongsTo(User::class, 'user_id');
         
     }
+
+    /**
+     * Relation: Una reunion pertenece a una franchise
+     */
+
+    public function franchise(): BelongsTo
+    {
+        return $this->belongsTo(Franchises::class, 'franchise_id');
+    }
+
     /**
      * Relacion: Una reunión pertenece a un prospecto Aradial.
      */

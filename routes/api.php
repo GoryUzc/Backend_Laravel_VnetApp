@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\InstallationOrderController;
-use App\Models\InstallationOrder;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProspectController;
@@ -35,16 +34,18 @@ Route::prefix('/v1')->group(function () {
     Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::get('/meetings/list/unassigned', [MeetingController::class, 'listMeetingUnassigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/list/assigned', [MeetingController::class, 'listAllMeetingAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::get('/meetings/user', [MeetingController::class, 'listMeetingUserAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::post('/meetings/create', [MeetingController::class, 'registerMeeting'])->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/detail/{id}', [MeetingController::class, 'detailsMeeting'])->middleware( 'jwt.auth', 'checkrole:1,2,3,4');
+    Route::put('/meetings/take/{id}', [MeetingController::class, 'takeMeeting'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::put('/meetings/update/{id}', [MeetingController::class, 'updateMeeting'])->middleware( 'jwt.auth', 'checkrole:1');
     Route::delete('/meetings/delete/{id}', [MeetingController::class, 'deleteMeeting'])->middleware('jwt.auth', 'checkrole:1');
     
         
     // CRUD de Prospectos
-    Route::post('/prospects/create', [ProspectController::class, 'registerProspect'])->middleware('jwt.auth','checkrole:1');
-    Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->middleware('jwt.auth','checkrole:1,2');
-    Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('jwt.auth','checkrole:1,2');
+    Route::post('/prospects/create', [ProspectController::class, 'registerProspect'])->middleware('jwt.auth','checkrole:1,2');
+    Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->middleware('jwt.auth','checkrole:1,2,3,4');
+    Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::put('/prospects/update/{id}', [ProspectController::class, 'updateProspect'])->middleware('jwt.auth','checkrole:1');
     Route::delete('/prospects/delete/{id}', [ProspectController::class, 'deleteProspect'])->middleware('jwt.auth','checkrole:1');
 
@@ -52,7 +53,7 @@ Route::prefix('/v1')->group(function () {
     // CRUD de Usuarios
     Route::post('/users/create', [UserController::class, 'registerUser'])->middleware('jwt.auth','checkrole:1');
     Route::get('/users/list', [UserController::class, 'listUser'])->middleware('jwt.auth','checkrole:1');
-    Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->middleware('jwt.auth','checkrole:1');
+    Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::put('/users/update/{id}', [UserController::class, 'updateUser'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::delete('/users/delete/{id}', [UserController::class, 'deleteUser'])->middleware('jwt.auth','checkrole:1,2,3');
 
@@ -63,6 +64,7 @@ Route::prefix('/v1')->group(function () {
     Route::get('/contractors/detail/{id}', [ContractorController::class, 'detailsContractor'])->middleware('jwt.auth','checkrole:1,2,3');
     Route::put('/contractors/update/{id}', [ContractorController::class, 'updateContractor'])->middleware('jwt.auth','checkrole:1,2,3');
     Route::delete('/contractors/delete/{id}', [ContractorController::class, 'deleteContractor'])->middleware('jwt.auth','checkrole:1');
+    Route::get('/contractor/workers', [ContractorController::class, 'listworkerscontractor'])->middleware('jwt.auth','checkrole:1,2,3,4');
 
     // CRUD orden de installation 
     Route::post('/orders/create', [InstallationOrderController::class, 'registerOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
@@ -70,5 +72,6 @@ Route::prefix('/v1')->group(function () {
     Route::get('/orders/detail/{id}', [InstallationOrderController::class, 'detailOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::put('/orders/update/{id}', [InstallationOrderController::class, 'updateOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::delete('/orders/delete/{id}', [InstallationOrderController::class, 'deleteOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
+    Route::post('/orders/upload-signature/{id}', [InstallationOrderController::class, 'uploadSignature'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     });
     

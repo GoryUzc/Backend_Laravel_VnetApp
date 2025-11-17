@@ -31,7 +31,7 @@ class InstallationOrder extends Model
         'prospect_aradial_id',
         'ont_puerto_1',
         'conector_sc_pc',
-        'patch_cord_scpc_scapc',
+        'patch_cord_scsp_scapc',
         'roseta',
         'adapter_scapc',
         'ont_4_puertos',
@@ -52,7 +52,9 @@ class InstallationOrder extends Model
         'etiqueta_cliente',
         'router',
         'detalles_instalacion',
-        'signature_paht',
+        'signature_path',
+        'create_ap',
+        'updated_ap',
     ];
     /**
      * The attributes that should be cast.
@@ -60,10 +62,9 @@ class InstallationOrder extends Model
      * @return array<string, string>
      */
     protected  $casts = [
-
         'ont_puerto_1' => 'integer',
         'conector_sc_pc' => 'integer',
-        'patch_cord_scpc_scapc' => 'integer',
+        'patch_cord_scsp_scapc' => 'integer',
         'roseta' => 'integer',
         'adapter_scapc' => 'integer',
         'ont_4_puertos' => 'integer',
@@ -74,6 +75,8 @@ class InstallationOrder extends Model
         'hilos' => 'integer',
         'ppoe_user' => 'string',
         'ppoe_password' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -100,9 +103,9 @@ class InstallationOrder extends Model
         return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
     }
 
-    public function getSignatureUrlAtribute(){
-        return $this->signature_paht
-        ? Storage::url($this->signature_paht)
+    public function getSignatureUrlAttribute(){
+        return $this->signature_path
+        ? Storage::url($this->signature_path)
         : null;
     }
 }

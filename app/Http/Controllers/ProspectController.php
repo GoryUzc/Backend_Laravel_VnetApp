@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProspectAradial;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
@@ -152,6 +153,35 @@ class ProspectController extends Controller
         }
     }
 
+    // Consult existence in prospect_aradial 
+
+public function consultProspectAradial(Request $request, $document)
+{
+    try {
+        // Busca el prospecto por ID
+        $prospect = ProspectAradial::find($document, 'document');
+
+        // Si llega aquí, el prospecto existe
+        return response()->json([
+            'status' => 'Prospect exists',
+        ], 200);
+
+    } catch (ModelNotFoundException $e) {
+        // Si no se encuentra el prospecto
+        return response()->json([
+            'error' => 'Prospect not found',
+        ], 404);
+
+    } catch (\Exception $e) {
+        // Para cualquier otro error inesperado
+        return response()->json([
+            'error' => 'Internal Server Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
     /**
      * Validate prospect data
      */
@@ -164,7 +194,7 @@ class ProspectController extends Controller
                 Rule::unique('prospect_aradial', 'aradial_id')->ignore($prospect?->aradial_id, 'aradial_id')
             ],
             'name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'document' => 'required|string|max:255',
             'document_type' => 'required|string|max:50',
             'phone' => 'required|string|max:20',

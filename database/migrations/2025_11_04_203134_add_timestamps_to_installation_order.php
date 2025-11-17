@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('installation_orders', function (Blueprint $table) {
-            //
+        Schema::table('installation_order', function (Blueprint $table) {
+            $table->timestamp('create_at');
+            $table->timestamp('update_at');
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('installation_orders', function (Blueprint $table) {
-            //
+        Schema::table('installation_order', function (Blueprint $table) {
+            $table->dropColumn(['create_at ' , 'update_ap']);
         });
     }
 };

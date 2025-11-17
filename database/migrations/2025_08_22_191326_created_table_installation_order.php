@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('prospect_aradial_id')->constrained('prospect_aradial')->onDelete('cascade');
             $table->integer('ont_puerto_1');
             $table->integer('conector_sc_pc');
-            $table->integer('patch_cord_scpc-scapc');
+            $table->integer('patch_cord_scsp_scapc');
             $table->integer('roseta');
             $table->integer('adapter_scapc');
             $table->integer('ont_4_puertos');

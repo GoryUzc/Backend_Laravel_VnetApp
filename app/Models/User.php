@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -66,5 +67,9 @@ class User extends Authenticatable
     public function contractor()
     {
         return $this->belongsTo(\App\Models\Contractor::class, 'contractor_id');
+    }
+
+    public function meetings() {
+        return $this->hasMany(Meeting::class, 'user_id');
     }
 }

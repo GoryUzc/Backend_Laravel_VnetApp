@@ -109,7 +109,8 @@ class MeetingController extends Controller {
         $user = $request->user();
         $meetings = match ((int)$user->role_id) {
             1 => Meeting::whereNull('user_id')->get(),
-            2, 3, 4 => Meeting::whereNull('user_id')->where('franchise_id', $user->franchise_id)->get(), 
+            2, 3, 4 => Meeting::whereNull('user_id')->where('franchise_id', $user->franchise_id)
+            ->get(), 
             default => null
         };
          if (!$meetings) {
@@ -147,7 +148,7 @@ class MeetingController extends Controller {
     public function listMeetingUserAssigned(Request $request) {
         $user = $request->user();
         $meetings = Meeting::where('user_id', $user->id)
-        ->where('status', 'assigned')
+        ->where('status', 'asignada')
         ->get();
         if(!$meetings){ 
             return response()->json([ 'message' => 'User without installations'], 401);
@@ -157,6 +158,61 @@ class MeetingController extends Controller {
             'meetings' => $meetings
         ], 200);
         }
+    }
+
+    public function listMeetingUserProcess(Request $request) {
+        $user = $request->user();
+        $meetings = Meeting::where('user_id', $user->id)
+        ->where('status', 'en_proceso')
+        ->get();
+        if(!$meetings){
+            return response()->json([ 'message' => 'User without installations'], 401);
+        }else {
+            return response()->json([
+            'message' => 'Meeting retrieved successfully',
+            'meetings' => $meetings
+        ], 200);
+        }
+    }
+
+
+    /*
+    * Init Meeting Installation
+    */
+
+    public function initMeetingUpdatedStatus(Request $request, $id) {
+        $meeting = Meeting::findOrFail($id, 'id'); 
+        if (!$meeting) {
+            return response()->json([
+                'message' => 'Meeting does not exist'
+            ], 404);
+        }
+        $meeting->update([
+            'status' => 'en_proceso'
+        ]);
+
+        return response()->json([
+        'message' => 'Status updated successfully',
+        'meeting' => $meeting // ← Devolver el modelo actualizado, no un número
+    ], 201);
+    }
+
+
+    public function endMeetingUpdatedStatus(Request $request, $id) {
+        $meeting = Meeting::findOrFail($id, 'id'); 
+        if (!$meeting) {
+            return response()->json([
+                'message' => 'Meeting does not exist'
+            ], 404);
+        }
+        $meeting->update([
+            'status' => 'finalizada'
+        ]);
+
+        return response()->json([
+        'message' => 'Status updated successfully',
+        'meeting' => $meeting // ← Devolver el modelo actualizado, no un número
+    ], 201);
     }
 
     /**
@@ -191,19 +247,15 @@ class MeetingController extends Controller {
         ], 404);
     }
 
-    // Validar datos
     $validator = $this->validateMeeting($request);
     if ($validator->fails()) {
         return response()->json($validator->errors(), 422);
     }
 
-    // datos validados (¡aquí estaba el error principal!)
     $validatedData = $validator->validated();
 
-    // Actualizar la reunión
     $meeting->update($validatedData);
 
-    // 5. Devolver la reunión actualizada
     return response()->json([
         'message' => 'Meeting updated successfully',
         'meeting' => $meeting // ← Devolver el modelo actualizado, no un número
@@ -299,7 +351,7 @@ public function takeMeeting(Request $request, $id){
                 $query->where('role_id', 4) // Trabajadores
                       ->orWhere('id', $user->id); // Incluir al contratista mismo
             })
-            ->whereDoesntHave('meeting', function ($query) use ($startTime, $endTime) {
+            ->whereDoesntHave('meetings', function ($query) use ($startTime, $endTime) {
                 $query->whereBetween('date_time1', [$startTime, $endTime]);
             })
             ->exists();
@@ -372,6 +424,7 @@ private function SendEmailTakeMeeting($meeting, $assignedUser){
         'franchise_id'=> 'required|exists:franchises,id',
         'latitude' => 'required|numeric', 
         'longitude' => 'required|numeric',
+        // 'nro_contract' => 'required|string',
         ]);
     }
 }

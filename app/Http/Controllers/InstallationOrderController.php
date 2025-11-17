@@ -59,15 +59,18 @@ class InstallationOrderController extends Controller {
 
         case 3:
             //Ordenes de TODO por contratista:
-             $query->whereHas('user', function ($q) use ($user) {
-                $q->where('contractor_id', $user->contractor_id);
-             });
+            $query = InstallationOrder::whereHas('user', function ($q) use ($user) {
+            $q->where('contractor_id', $user->contractor_id);
+            })->whereHas('meeting', function ($query) {
+            $query->where('status', 'finalizada');
+            });
 
-             break;
-             
-             
+            break;  
         case 4: // Contratista o Trabajador → órdenes asignadas a ellos o a su contratista
-            $query->where('user_id', $user->id);
+            $query->where('user_id', $user->id)
+            ->whereHas('meeting', function ($query) {
+            $query->where('status', 'finalizada');
+            });
             
             break;
 
@@ -118,31 +121,45 @@ class InstallationOrderController extends Controller {
     }
 
 
-    public function updateOrderInstallation(Request $request, $id){
+    public function detailOrderUserInstallation(Request $request, $id) {
         try {
-            $order = InstallationOrder::find('id', $id);
-            if(!$order) {
+            $order = InstallationOrder::where('id_meeting', $id)->first();
+            if(empty($order)) {
+                return response()->json([
+                    'message' => 'Order not found'
+                ], 404);
+            }
             return response()->json([
-            'message' => 'Order no exist'
-        ], 404);
-        }
-        $validator = $this->validateMeeting($request);
-            if ($validator->fails()) {
-        return response()->json($validator->errors(), 422);
-        }
-
-         $validatedData = $validator->validated();
-
-         $order->update($validatedData);
-        return response()->json([
-        'message' => 'Order updated successfully',
-        'meeting' => $order
-        ], 200);
-    }catch(Exception $e){
+                'message' => 'Order details retrieved successfully',
+                'order' => $order
+            ], 200);
+        }catch(Exception $e){
             return response()->json([
             'error' => 'Internal Server Error: ' . $e->getMessage()
         ], 500);
+        }
+    }
 
+    public function updateOrderInstallation(Request $request, $id){
+        try {
+            $order = InstallationOrder::findOrFail($id);
+
+            $validator = $this->ValidateOrderInstallation($request);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+
+            $validatedData = $validator->validated();
+            $order->update($validatedData);
+
+            return response()->json([
+                'message' => 'Order updated successfully',
+                'order' => $order
+            ], 200);
+        }catch(Exception $e){
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
         }  
     }
 
@@ -153,33 +170,29 @@ class InstallationOrderController extends Controller {
         //Verificar el rol del user 
         if(!in_array($user->role_id,[1])){
             return response()->json([
-             'error' => 'You do not have permission to delete order'   
+            'error' => 'You do not have permission to delete order'   
             ], 403);}
 
-            $order = InstallationOrder::find('id', $id);
-            if (!$order){
-            return response()->json([
-            'message' => 'Order does not exist'
-        ], 404); 
-    }
-        // Eliminar
-        $deleted = $order->delete();
-    
-        if ($deleted) {
-            return response()->json([
-                'message' => 'Order deleted successfully'
-            ], 200);
-        } else {
-            return response()->json([
-                'error' => 'Failed to delete Order'
-            ], 500);
-        }
+            $order = InstallationOrder::findOrFail($id);
+
+            // Eliminar
+            $deleted = $order->delete();
+        
+            if ($deleted) {
+                return response()->json([
+                    'message' => 'Order deleted successfully'
+                ], 200);
+            } else {
+                return response()->json([
+                    'error' => 'Failed to delete Order'
+                ], 500);
+            }
     }
 
     public function uploadSignature(Request $request, $id){
         // Validar que el archivo sea un imagen
         $request->validate([
-            'signature' => 'required|image|mimes:png,jpg,jpeg|max2048', //Max 2MB
+            'signature' => 'required|image|mimes:png,jpg,jpeg|max:2048', // Max 2MB
         ]);
 
         try{
@@ -189,15 +202,10 @@ class InstallationOrderController extends Controller {
             return response()->json([
                 'message' => 'Order no found',
             ]);
-            }
-            // Delete previous signature if exist
-            if ($order->signature_path) {
-                Storage::delete(InstallationOrder::find($id)->signature_path);
-            }
-
+        }
             // Save new signature 
-            $paht = $request->file('signature')->Storage('signatures', 'public');
-            $order->update(['signature_path' => $paht]);
+            $path = $request->file('signature')->store('public/signature');
+            $order->update(['signature_path' => str_replace('public/', 'storage/', $path)]);
 
             return response()-> json([
                 'message' => 'Signature uploaded successfully',
@@ -215,11 +223,11 @@ class InstallationOrderController extends Controller {
             $request->all(),
             [
                 'user_id'=>'required|exists:users,id',
-                'id_meeting' =>'required|exists:meeting,id',
+                'id_meeting' =>'required|exists:meetings,id',
                 'prospect_aradial_id'=>'required|exists:prospect_aradial,id',
                 'ont_puerto_1' =>'required|numeric|min:0',
                 'conector_sc_pc'=>'required|numeric|min:0',
-                'patch_cord_scpc-scapc'=>'required|numeric|min:0',
+                'patch_cord_scsp_scapc'=>'required|numeric|min:0',
                 'roseta'=>'required|numeric|min:0',
                 'adapter_scapc'=>'required|numeric|min:0',
                 'ont_4_puertos'=>'required|numeric|min:0',

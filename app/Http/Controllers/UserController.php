@@ -131,8 +131,8 @@ class UserController extends Controller
             'message'=>'User delete successfully'
         ], 200);
             } else {
-         return response()->json(['error' => 'Failed to delete user'], 500);
-             }
+        return response()->json(['error' => 'Failed to delete user'], 500);
+            }
     }
 
     /**

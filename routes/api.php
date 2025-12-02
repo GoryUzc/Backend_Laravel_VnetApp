@@ -25,6 +25,7 @@ Route::prefix('/v1')->group(function () {
     Route::post('/prospect/verify-email', [LoginController::class, 'verifyProspect']);
     Route::post('/prospect/send-otp', [LoginController::class, 'sendOtpToProspect']);
     Route::get('/prospect/consult/{id}', [ProspectController::class, 'consultProspectAradial']);
+    Route::get('/prospect/consult/{document}/{type_document}', [ProspectController::class, 'getConsultFromAradial']);
 
     //Ruta para consultar prospecto por Id y crear citas 
     Route::get('/prospect/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('prospect.auth');

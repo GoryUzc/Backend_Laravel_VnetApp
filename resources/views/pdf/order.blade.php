@@ -6,7 +6,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
             margin: 0;
             padding: 0;
         }
@@ -14,7 +16,7 @@
             text-align: center;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .header table {
             width: 100%;
@@ -88,8 +90,12 @@
     <table>
         <tr>
             <td class="logo">
-                {{-- Logo: asegúrate de tenerlo en public/images/logo.png --}}
-                <img src="{{ public_path('images/image001.png') }}" alt="VNET" height="40">
+                @php
+                    $path = public_path('images/image001.png');
+                    $data = file_get_contents($path);
+                    $base64 = 'data:image/png;base64,' . base64_encode($data);
+                @endphp
+                <img src="{{ $base64 }}" alt="VNET" height="80">
             </td>
             <td class="title">
                 <h1>ORDEN DE INSTALACIÓN</h1>
@@ -144,19 +150,21 @@
     <div class="field">{{ $order->detalles_instalacion ?? 'N/A' }}</div>
 </div>
 
-<div class="signature-area">
-    <table width="100%">
-        <tr>
-            <td width="50%">
-                <div><strong>Firma del Cliente</strong></div>
-                <div class="signature-box">
-                    @if($order->signature_path)
-                        <img src="{{ public_path($order->signature_path) }}" height="50" style="margin-top:5px;">
-                    @endif
-                </div>
-            </td>
-        </tr>
-    </table>
+<div class="signature-box">
+    @if($order->signature_path)
+        @php
+            $sigPath = public_path($order->signature_path);
+            if (file_exists($sigPath)) {
+                $sigData = file_get_contents($sigPath);
+                $sigBase64 = 'data:image/png;base64,' . base64_encode($sigData);
+            } else {
+                $sigBase64 = null;
+            }
+        @endphp
+        @if($sigBase64)
+            <img src="{{ $sigBase64 }}" height="50" style="margin-top:5px;">
+        @endif
+    @endif
 </div>
 
 <div class="footer">

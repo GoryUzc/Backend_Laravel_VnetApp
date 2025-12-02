@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InstallationOrder;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Validator;
 
 
@@ -189,34 +190,39 @@ class InstallationOrderController extends Controller {
             }
     }
 
-    public function uploadSignature(Request $request, $id){
-        // Validar que el archivo sea un imagen
-        $request->validate([
-            'signature' => 'required|image|mimes:png,jpg,jpeg|max:2048', // Max 2MB
-        ]);
+public function uploadSignature(Request $request, $id)
+{
+    $request->validate([
+        'signature' => 'required|image|mimes:png,jpg,jpeg|max:2048',
+    ]);
 
-        try{
+    $order = InstallationOrder::find($id);
 
-        $order = InstallationOrder::find($id);
-        if(!$order){
-            return response()->json([
-                'message' => 'Order no found',
-            ]);
-        }
-            // Save new signature 
-            $path = $request->file('signature')->store('public/signature');
-            $order->update(['signature_path' => str_replace('public/', 'storage/', $path)]);
-
-            return response()-> json([
-                'message' => 'Signature uploaded successfully',
-                'signature_url' => $order->signature_url,
-            ], 200);  
-        }catch(Exception $e){
-            return response()->json([
-                'error' => 'Internal Server Error: ' . $e->getMessage()
-            ], 500);
-        }
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
     }
+
+    try {
+        // Guardar en disco 'public', carpeta 'signatures'
+        $path = $request->file('signature')->store('signatures', 'public');
+
+        // Guardar ruta relativa a public/storage (para usar con public_path())
+        $order->update(['signature_path' => 'storage/' . $path]);
+
+        // URL pública (opcional, si quieres devolverla)
+        $url = Storage::disk('public')->url($path);
+
+        return response()->json([
+            'message' => 'Signature uploaded successfully',
+            'signature_url' => $url,
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Internal Server Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     private function ValidateOrderInstallation(Request $request){
         return Validator::make(

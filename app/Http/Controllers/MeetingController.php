@@ -130,7 +130,7 @@ class MeetingController extends Controller {
         $user = $request->user();
         $meetings = match((int)$user->role_id){
             1 => Meeting::whereNotNull('user_id')->get(),
-            2 => Meeting::with('franchise')
+            2, 3, 4 => Meeting::with('franchise')
             ->where('franchise_id', $user->franchise_id)
             ->whereNotNull('user_id')->get(),
             default => null
@@ -424,7 +424,7 @@ private function SendEmailTakeMeeting($meeting, $assignedUser){
         'franchise_id'=> 'required|exists:franchises,id',
         'latitude' => 'required|numeric', 
         'longitude' => 'required|numeric',
-        // 'nro_contract' => 'required|string',
+        'nro_contract' => 'required|string',
         ]);
     }
 }

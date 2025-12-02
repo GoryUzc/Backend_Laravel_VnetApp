@@ -22,8 +22,10 @@ class OrderPdfController extends Controller
         // Generar PDF con opciones soportadas por DomPDF
         $pdf = Pdf::setOptions([
             'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
         ])->loadView('pdf.order', compact('order'))
-          ->setPaper('a4');
+        ->setPaper('a4');
 
         // Devolver como descarga
         return $pdf->download("orden_instalacion_{$order->id}.pdf");
@@ -37,9 +39,11 @@ class OrderPdfController extends Controller
 
             // Generar PDF para previsualización
             $pdf = Pdf::setOptions([
-                'isRemoteEnabled' => true,
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
             ])->loadView('pdf.order', compact('order'))
-              ->setPaper('a4');
+            ->setPaper('a4');
 
             return $pdf->stream("orden_instalacion_{$order->id}.pdf");
         } catch (ModelNotFoundException $e) {

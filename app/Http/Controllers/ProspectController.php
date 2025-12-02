@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ProspectAradial;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -39,6 +41,61 @@ class ProspectController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Consult existence in prospect from aradial 
+     */
+    public function getConsultFromAradial($document, $type_document) {
+
+        try {
+            if (empty($document)) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Document parameter is required'
+                ], 400);
+            }
+            Log::info("Consulting prospect in API from Aradial with document: " . $document);
+            
+            $response = Http::timeout(30)
+            ->withOptions(['verify' => false])
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->get("https://10.245.51.11/api/v2/client/V/{$document}"); 
+            
+            if ($response->successful()) {
+                $externalData = $response->json();
+                Log::info( print_r($externalData, true) );
+                $transformedData = $this->transformerAradialData($externalData['data'], $type_document);
+                $prospect = $this->syncProspectToLocalData($transformedData);
+                $contractIds = $this->extractsContractIds($externalData['data']);
+                return response()->json([
+                    'status' => 'success',
+                    'prospect' => $prospect->id,
+                    'email' => $prospect->email,
+                    'contract_ids' => $contractIds,
+                    'existInAradial' => true,
+                ], 200);
+            } else {
+                Log::warning("Failed to retrieve prospect from Aradial API for document: ", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return response()->json([
+                    'status'=> 'error',
+                    'message' => 'Failed to retrieve prospect from Aradial API',
+                    'external_status'=> $response->status(),
+                ], 404);
+            }
+        }catch (\Exception $e) {
+            Log::error("Error consulting prospect from Aradial API: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Internal Server Error: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -207,5 +264,47 @@ public function consultProspectAradial(Request $request, $document)
         ];
 
         return Validator::make($request->all(), $rules);
+    }
+
+    private function transformerAradialData($data, $type_document) {
+        return [
+            'aradial_id' => $data['id'] ?? null,
+            'name' => $data['name'] ?? null,
+            'last_name' => $data['last_name'] ?? null,
+            'document' => $data['doc'] ?? null,
+            'document_type' => $type_document ?? null,
+            'phone' => $data['contracts'][0]['cellphone'] ?? null,
+            'address' => $data['contracts'][0]['address'] ?? null,
+            'city' => $data['sucursal'] ?? null,
+            'email' => $data['email'] ?? null,
+            'plan' => $data['contracts'][0]['services'][0]['package_name'] ?? null,
+            'franchise_id' => $data['contracts'][0]['franchise_id'] ?? null,
+            'status_red' => $data['contracts'][0]['services'][0]['service_status'] ?? null,
+        ];
+    }
+
+    private function syncProspectToLocalData($data) {
+
+        $prospect = ProspectAradial::where('document', $data['document'])->first();
+
+        if ($prospect){
+
+            $prospect->update($data);
+            Log::info("Prospect update locally with document:" . $data['document']);
+        } else {
+            $prospect = ProspectAradial::create($data);
+            Log::info("Prospect created locally with document:" . $data['document']);
+        }
+        
+        return $prospect;
+    }
+
+    private function extractsContractIds ($data): array {
+
+        if (!isset($data['contracts']) || !is_array($data['contracts'])) {
+            return [];
+        }
+
+        return array_column($data['contracts'], 'contract_id');
     }
 }

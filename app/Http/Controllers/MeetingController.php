@@ -163,7 +163,7 @@ class MeetingController extends Controller {
     public function listMeetingUserProcess(Request $request) {
         $user = $request->user();
         $meetings = Meeting::where('user_id', $user->id)
-        ->where('status', 'en_proceso')
+        ->where('status', 'en proceso')
         ->get();
         if(!$meetings){
             return response()->json([ 'message' => 'User without installations'], 401);
@@ -180,7 +180,7 @@ class MeetingController extends Controller {
     * Init Meeting Installation
     */
 
-    public function initMeetingUpdatedStatus(Request $request, $id) {
+    public function initMeetingUpdatedStatus($id) {
         $meeting = Meeting::findOrFail($id, 'id'); 
         if (!$meeting) {
             return response()->json([
@@ -188,17 +188,17 @@ class MeetingController extends Controller {
             ], 404);
         }
         $meeting->update([
-            'status' => 'en_proceso'
+            'status' => 'en proceso'
         ]);
 
         return response()->json([
         'message' => 'Status updated successfully',
-        'meeting' => $meeting // ← Devolver el modelo actualizado, no un número
+        'meeting' => $meeting 
     ], 201);
     }
 
 
-    public function endMeetingUpdatedStatus(Request $request, $id) {
+    public function endMeetingUpdatedStatus($id) {
         $meeting = Meeting::findOrFail($id, 'id'); 
         if (!$meeting) {
             return response()->json([
@@ -218,7 +218,7 @@ class MeetingController extends Controller {
     /**
      * Get meeting details
      */
-    public function detailsMeeting(Request $request, $id)
+    public function detailsMeeting($id)
     {
         $meeting = Meeting::where('id' , $id)->first();
         if(empty($meeting)) {
@@ -378,6 +378,48 @@ public function takeMeeting(Request $request, $id){
     return response()->json([
         'error' => 'Your role does not have permission to take installation orders.'
     ], 403);
+}
+
+
+public function getProspectAradialMeeting($id) {
+    $meeting = Meeting::where([
+        'prospect_aradial_id' => $id,
+        'status' => 'asignada'
+    ])->first();
+    if (empty($meeting)) {
+        return response()->json([
+            'message' => 'Meeting do not exist'
+        ], 404);
+    }else {
+        return response()->json([
+            'exists' => true,
+            'meeting' => $meeting['id']
+        ], 200);
+    }
+}
+
+public function changeStatusMeetingClient (Request $request ,$id){
+
+    $request->validate([
+        'status' => 'required|string|max:50',
+        'observation' => 'required|string|max:255',
+    ]);
+
+    $meeting = Meeting::find($id);
+    if (!$meeting) {
+        return response()->json([
+            'message' => 'Meeting does not exist'
+        ], 404);
+    }
+    $meeting->update([
+        'status' => $request->input('status'),
+        'observation' => $request->input('observation'),
+    ]);
+
+    return response()->json([
+    'message' => 'Status updated successfully', 
+    'meeting' => $meeting,
+], 201);
 }
 
 private function SendEmailTakeMeeting($meeting, $assignedUser){

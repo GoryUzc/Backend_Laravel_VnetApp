@@ -65,8 +65,8 @@ class ProspectController extends Controller
             ->withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-            ])->get("https://10.245.51.11/api/v2/client/V/{$document}"); 
-            
+            ])->get(env('IP_CONSULT')."/api/v2/client/V/{$document}"); 
+            Log::info( print_r($response, true) );
             if ($response->successful()) {
                 $externalData = $response->json();
                 Log::info( print_r($externalData, true) );

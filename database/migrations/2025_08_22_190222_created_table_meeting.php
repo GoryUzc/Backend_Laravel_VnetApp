@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->nullable();
             $table->dateTime('date_time1')->nullable();
             $table->foreignId('franchise_id')->constrained('franchises')->onDelete('cascade');
-            $table->string('status')->default('No_asignada'); 
+            $table->string('status')->default('No asignada'); 
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();

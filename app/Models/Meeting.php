@@ -31,6 +31,7 @@ class Meeting extends Model {
         'date_time1',
         'franchise_id',
         'status',
+        'observation',
         'latitude',
         'longitude',
         'nro_contract',

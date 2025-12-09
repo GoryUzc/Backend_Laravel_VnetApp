@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('installation_order', function (Blueprint $table) {
-            $table->string('signature_path')->nullable();
+            //$table->string('signature_path')->nullable();
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('installation_order', function (Blueprint $table) {
-            $table->dropColumn('signature_path');
+            //$table->dropColumn('signature_path');
         });
     }
 };

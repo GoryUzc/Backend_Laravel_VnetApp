@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('installation_order', function (Blueprint $table) {
+            $table->timestamp('update_ap')->nullable();
             $table->renameColumn('update_ap', 'updated_ap');
         });
     }

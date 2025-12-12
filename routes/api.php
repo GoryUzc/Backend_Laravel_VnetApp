@@ -69,7 +69,7 @@ Route::prefix('/v1')->group(function () {
 
 
     //CRUD Contratistas
-    Route::post('/contractors/create', [ContractorController::class, 'registerContractor'])->middleware('jwt.auth','checkrole:1,2');
+    Route::post('/contractors/create', [ContractorController::class, 'registerContractor']); //->middleware('jwt.auth','checkrole:1,2');
     Route::get('/contractors/list', [ContractorController::class, 'listContractor'])->middleware('jwt.auth','checkrole:1,2');
     Route::get('/contractors/detail/{id}', [ContractorController::class, 'detailsContractor'])->middleware('jwt.auth','checkrole:1,2,3');
     Route::put('/contractors/update/{id}', [ContractorController::class, 'updateContractor'])->middleware('jwt.auth','checkrole:1,2,3');

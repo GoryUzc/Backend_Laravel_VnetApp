@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class JwtProspect
 {
+  
     
     public function handle(Request $request, Closure $next)
     {

@@ -163,7 +163,7 @@ class MeetingController extends Controller {
     public function listMeetingUserProcess(Request $request) {
         $user = $request->user();
         $meetings = Meeting::where('user_id', $user->id)
-        ->where('status', 'en proceso')
+        ->where('status', 'en_proceso')
         ->get();
         if(!$meetings){
             return response()->json([ 'message' => 'User without installations'], 401);
@@ -223,15 +223,35 @@ class MeetingController extends Controller {
         $meeting = Meeting::where('id' , $id)->first();
         if(empty($meeting)) {
             return response()->json([
-            'message' => 'Prospect no exist'
+            'message' => 'Meeting no exist'
         ], 404);
         }
         return response()->json([
             'message' => 'Meeting details retrieved successfully',
             'meeting' => $meeting
         ], 200);
+    }
+
+     public function getAllContractProspectMeeting($id)
+    {
+        log::info("Consulting meetings for prospect: $id");
+        $meetings = Meeting::where('prospect_aradial_id' , $id)
+        ->whereIn('status', ['asignada', 'no_asignada'])
+        ->get()->groupBy('nro_contract');
+        if($meetings->isEmpty()) {
+            return response()->json([
+            'message' => 'Meeting no exist'
+        ], 404);
+        }
+
+        $result = $meetings->map(fn($group) => $group->pluck('id'));
+        return response()->json([
+            'message' => 'Meeting retrieved successfully',
+            'meetings' => $result
+        ], 200);
 
     }
+
 
 
     /**
@@ -382,18 +402,38 @@ public function takeMeeting(Request $request, $id){
 
 
 public function getProspectAradialMeeting($id) {
-    $meeting = Meeting::where([
-        'prospect_aradial_id' => $id,
-        'status' => 'asignada'
-    ])->first();
-    if (empty($meeting)) {
+    log::info("Consulting meetings for prospect: $id");
+    $meetings = Meeting::where('prospect_aradial_id', $id)
+    ->whereIn('status', ['asignada', 'no_asignada'])
+    ->groupBy('nro_contract')
+    ->selectRaw('nro_contract, COUNT(*) as total')
+    ->get();
+    if ($meetings->isEmpty()) {
         return response()->json([
             'message' => 'Meeting do not exist'
         ], 404);
     }else {
         return response()->json([
             'exists' => true,
-            'meeting' => $meeting['id']
+            'meetings' => $meetings
+        ], 200);
+    }
+}
+
+public function detailMeetingContract(string $idmeeting, $idprospect) {
+    $meeting = Meeting::where([
+        ['id', $idmeeting],
+        ['prospect_aradial_id', $idprospect]
+    ])->first();
+
+    if (empty($meeting)) {
+        return response()->json([
+        'message' => 'Meeting do not exist'
+    ], 404);
+    }else{
+        return response()->json([
+            'message' => 'Meeting retrieved successfully',
+            'meeting' => $meeting
         ], 200);
     }
 }

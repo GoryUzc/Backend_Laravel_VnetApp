@@ -59,7 +59,7 @@ class ProspectController extends Controller
                 ], 400);
             }
             Log::info("Consulting prospect in API from Aradial with document: " . $document);
-            
+            log::info("env var: " . env('IP_CONSULT'));
             $response = Http::timeout(30)
             ->withOptions(['verify' => false])
             ->withHeaders([

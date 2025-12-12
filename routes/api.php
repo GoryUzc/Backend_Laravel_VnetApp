@@ -36,7 +36,9 @@ Route::prefix('/v1')->group(function () {
     // CRUD de citas 
     Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::get('/meetings/prospect/consult/{id}', [MeetingController::class, 'getProspectAradialMeeting']);
-    Route::put('/meetings/prospect/changestatus/{id}', [MeetingController::class, 'changeStatusMeetingClient']); //->middleware('prospect.auth');
+    Route::put('/meetings/prospect/changestatus/{id}', [MeetingController::class, 'changeStatusMeetingClient'])->middleware('prospect.auth');
+    Route::get('/meetings/prospect/detail/{idmeeting}/{idprospect}', [MeetingController::class, 'detailMeetingContract'])->middleware('prospect.auth');
+    Route::get('/meetings/prospect/contract/{id}', [MeetingController::class, 'getAllContractProspectMeeting']); //->middleware('prospect.auth');
     Route::get('/meetings/list/unassigned', [MeetingController::class, 'listMeetingUnassigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/list/assigned', [MeetingController::class, 'listAllMeetingAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/user', [MeetingController::class, 'listMeetingUserAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');

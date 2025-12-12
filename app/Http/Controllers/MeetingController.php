@@ -50,7 +50,7 @@ class MeetingController extends Controller {
                 'direccion' => $prospect['address'] ?? 'No especificada',
                 'clienteNombre' => $prospect->name . ' ' . $prospect->last_name,
                 'clienteEmail' => $prospect->email,
-                'clienteTelefono' => $prospect->phone,
+                'contrato' => $validatedData['nro_contract'],
             ];
             
             // Enviar correo de confirmación
@@ -456,6 +456,23 @@ public function changeStatusMeetingClient (Request $request ,$id){
         'observation' => $request->input('observation'),
     ]);
 
+    $prospectId = $meeting->prospect_aradial_id;
+    $prospect = ProspectAradial::find($prospectId);
+
+    $emailData = [
+        'clienteNombre' => $prospect->name . ' ' . ($prospect->last_name ?? ''),
+        'plan' => $prospect->plan ?? 'No especificado',
+        'direccion' => $prospect->address ?? 'No especificada',
+        'fechaHora' => $meeting->date_time1->format('d/m/Y \a \l\a\s H:i'),
+        'contrato' => $meeting->nro_contract,
+    ];
+
+    Mail::send('email.meetingCanceled', $emailData, function ($message) use ($prospect) {
+        $message->from(env('MAIL_FROM_ADDRESS'), 'VNET');
+        $message->to($prospect->email);
+        $message->subject('Actualización de Cita - VNET');
+    });
+
     return response()->json([
     'message' => 'Status updated successfully', 
     'meeting' => $meeting,
@@ -477,6 +494,7 @@ private function SendEmailTakeMeeting($meeting, $assignedUser){
         'tecnicoNombre' => $assignedUser->name . ' ' . ($assignedUser->last_name ?? ''),
         'telefonoTecnico' => $assignedUser->phone ?? 'No disponible',
         'direccion' => $prospect->address ?? 'Dirección no especificada',
+        'contrato' => $meeting->nro_contract,
         ]; 
     try {
         

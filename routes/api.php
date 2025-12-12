@@ -61,7 +61,7 @@ Route::prefix('/v1')->group(function () {
 
 
     // CRUD de Usuarios
-    Route::post('/users/create', [UserController::class, 'registerUser'])->middleware('jwt.auth','checkrole:1');
+    Route::post('/users/create', [UserController::class, 'registerUser']); //->middleware('jwt.auth','checkrole:1');
     Route::get('/users/list', [UserController::class, 'listUser'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::get('/users/detail/{id}', [UserController::class, 'detailsUser'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::put('/users/update/{id}', [UserController::class, 'updateUser'])->middleware('jwt.auth','checkrole:1,2,3,4');

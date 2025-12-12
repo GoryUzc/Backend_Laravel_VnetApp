@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cita creada con exitosamente</title>
+    <title>Cita creada exitosamente</title>
 </head>
 <body>
     <h2>Confirmación de Cita - VNET</h2>
@@ -12,7 +12,8 @@
     <ul>
         <li><strong>Fecha y Hora:</strong> {{ $fechaHora }}</li>
         <li><strong>Plan:</strong> {{ $plan }}</li>
-        <li><strong>Dirección:</strong> {{ $direccion }}</li>   
+        <li><strong>Dirección:</strong> {{ $direccion }}</li>  
+        <li><strong>Contrato N°:</strong> {{ $contrato }}</li> 
     </ul>
     
     <p>Un técnico se presentará en la fecha y hora acordada.</p>

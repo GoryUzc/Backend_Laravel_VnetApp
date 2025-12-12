@@ -141,11 +141,6 @@ class UserController extends Controller
     private function validateUser(Request $request, $user = null)
     {
         $rules = [
-            'aradial_user_id' => [
-                'required', 
-                'string',
-                Rule::unique('users', 'aradial_user_id')->ignore($user?->id)
-            ],
             'name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
             'document' => [

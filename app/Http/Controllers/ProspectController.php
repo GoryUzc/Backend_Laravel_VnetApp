@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Meeting;
 use App\Models\ProspectAradial;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -175,6 +177,45 @@ class ProspectController extends Controller
 
             return response()->json([
                 'message' => 'Prospect updated successfully',
+                'prospect' => $prospect
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function changeStatusprospect($id) {
+        $prospect = ProspectAradial::find($id);
+
+        if (!$prospect) {
+            return response()->json([
+                'message' => 'Prospect does not exist'
+            ], 404);
+        }
+
+        try {
+            $newStatus = 'activo';
+            $prospect->status_red = $newStatus;
+            $prospect->update();
+
+            $meeting = Meeting::where('prospect_aradial_id', $prospect->id)->first();
+
+            $email = [
+                'clienteNombre' => $prospect->name . ' ' . ($prospect->last_name ?? ''),
+                'plan' => $prospect->plan ?? 'No especificado',
+                'direccion' => $prospect->address ?? 'No especificada',
+                'contrato' => $meeting->nro_contract,
+            ];
+
+            Mail::send('email.prospectActive', $email, function($message) use ($prospect){
+                $message->to($prospect->email);
+                $message->subject('Conexion establecida - Vnet');
+            });
+
+            return response()->json([
+                'message' => 'Prospect status changed successfully',
                 'prospect' => $prospect
             ], 200);
         } catch (\Exception $e) {

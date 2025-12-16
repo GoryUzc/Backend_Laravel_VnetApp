@@ -35,10 +35,11 @@ Route::prefix('/v1')->group(function () {
 
     // CRUD de citas 
     Route::get('/meetings/list', [MeetingController::class, 'listMeeting'])->middleware('jwt.auth','checkrole:1,2,3,4');
+    Route::get('/meetings/list/end', [MeetingController::class, 'listMeetingEnd'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::get('/meetings/prospect/consult/{id}', [MeetingController::class, 'getProspectAradialMeeting']);
     Route::put('/meetings/prospect/changestatus/{id}', [MeetingController::class, 'changeStatusMeetingClient'])->middleware('prospect.auth');
     Route::get('/meetings/prospect/detail/{idmeeting}/{idprospect}', [MeetingController::class, 'detailMeetingContract'])->middleware('prospect.auth');
-    Route::get('/meetings/prospect/contract/{id}', [MeetingController::class, 'getAllContractProspectMeeting']); //->middleware('prospect.auth');
+    Route::get('/meetings/prospect/contract/{id}', [MeetingController::class, 'getAllContractProspectMeeting'])->middleware('prospect.auth');
     Route::get('/meetings/list/unassigned', [MeetingController::class, 'listMeetingUnassigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/list/assigned', [MeetingController::class, 'listAllMeetingAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/meetings/user', [MeetingController::class, 'listMeetingUserAssigned'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
@@ -57,6 +58,7 @@ Route::prefix('/v1')->group(function () {
     Route::get('/prospects/list', [ProspectController::class, 'listProspects'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::get('/prospects/detail/{id}', [ProspectController::class, 'prospectDetails'])->middleware('jwt.auth','checkrole:1,2,3,4');
     Route::put('/prospects/update/{id}', [ProspectController::class, 'updateProspect'])->middleware('jwt.auth','checkrole:1');
+    Route::put('/prospects/changestatus/{id}', [ProspectController::class, 'changeStatusprospect'])->middleware('jwt.auth','checkrole:1,2');
     Route::delete('/prospects/delete/{id}', [ProspectController::class, 'deleteProspect'])->middleware('jwt.auth','checkrole:1');
 
 

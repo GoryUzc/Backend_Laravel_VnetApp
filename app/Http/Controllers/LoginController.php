@@ -79,7 +79,7 @@ class LoginController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'aradial_user_id' => 'required|string|unique:users,aradial_user_id',
+            // 'aradial_user_id' => 'required|string|unique:users,aradial_user_id',
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'document' => 'required|string|unique:users,document',
@@ -131,7 +131,7 @@ class LoginController extends Controller
        
         //Crear nuevo usuario 
         $user = new User();
-        $user->aradial_user_id = $request->aradial_user_id;
+        // $user->aradial_user_id = $request->aradial_user_id;
         $user->name = $request->name;
         $user->last_name = $request->last_name;
         $user->document = $request->document;

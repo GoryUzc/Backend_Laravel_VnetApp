@@ -175,6 +175,38 @@ class MeetingController extends Controller {
         }
     }
 
+    public function listMeetingEnd(Request $request) {
+        $user = $request->user();
+        $meetings = match((int)$user->role_id){
+            1 => Meeting::with(['user', 'installationOrder'])
+            ->where('status', 'finalizada')->get(),
+            2, 3, 4 => Meeting::with(['user', 'installationOrder'])
+            ->where('franchise_id', $user->franchise_id)
+            ->where('status', 'finalizada')->get(),
+            default => null
+        };
+        if (!$meetings) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+        
+        $rows = $meetings->map(fn($m) => [
+        'nro_contract'    => $m->nro_contract,
+        'tecnico'         => $m->user->name ?? 'Sin técnico',
+        'contratista'     => $m->user->contractor->name ?? 'Sin contratista',
+        'status'          => $m->status,
+        'usuario_ppoe'    => $m->installationOrder->ppoe_user ?? '',
+        'password_ppoe'   => $m->installationOrder->ppoe_password ?? '',
+        'id_cita'         => $m->id,
+    ]);
+
+        return response()->json([
+            'message' => 'Meeting retrieved successfully',
+            'meetings' => $rows
+        ], 200);
+    }
+
 
     /*
     * Init Meeting Installation

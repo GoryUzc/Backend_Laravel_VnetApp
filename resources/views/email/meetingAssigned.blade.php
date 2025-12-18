@@ -5,7 +5,7 @@
 </head>
 <body>
     <p>Hola <strong>{{ $clienteNombre }}</strong>,</p>
-    <p>Te informamos que tu cita de instalación para el {{$contrato}}ha sido asignada con éxito. Aquí están los detalles: </p>
+    <p>Te informamos que tu cita de instalación para el el contrato numero {{$contrato}} ha sido asignada con éxito. Aquí están los detalles: </p>
     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <p><strong>📅 Fecha y Hora:</strong> {{ $fechaHora }}</p>
         <p><strong>👤 Técnico Asignado:</strong> {{ $tecnicoNombre }}</p>

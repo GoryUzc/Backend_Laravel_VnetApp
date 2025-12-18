@@ -7,7 +7,7 @@
     <h2>Conexion exitosa - VNET</h2>
     <p>Estimado/a {{ $clienteNombre }},</p>
     
-    <p>Su conexion ha sido creada exitosamente:</p>
+    <p>Su conexion ha sido establecida exitosamente:</p>
     
     <ul>
         <li><strong>Plan:</strong> {{ $plan }}</li>

@@ -16,7 +16,7 @@
         <li><strong>Contrato:</strong> {{ $contrato }}</li>
     </ul>
     
-    <p>Le invitamos a entrar a la plataforma y tomar su cita.</p>
+    <p>Gracias por preferirnos</p>
     
     <p>Atentamente,<br>Equipo VNET</p>
 </body>

@@ -108,12 +108,13 @@ class MeetingController extends Controller {
     public function listMeetingUnassigned (Request $request){
         $user = $request->user();
         $meetings = match ((int)$user->role_id) {
-            1 => Meeting::whereNull('user_id')->get(),
+            1 => Meeting::whereNull('user_id')
+            ->where('status', 'no_asignada')->get(),
             2, 3, 4 => Meeting::whereNull('user_id')->where('franchise_id', $user->franchise_id)
-            ->get(), 
+            ->where('status', 'no_asignada')->get(),
             default => null
         };
-         if (!$meetings) {
+        if (!$meetings) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -220,7 +221,7 @@ class MeetingController extends Controller {
             ], 404);
         }
         $meeting->update([
-            'status' => 'en proceso'
+            'status' => 'en_proceso'
         ]);
 
         return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InstallationOrder;
 use App\Models\Meeting;
 use App\Models\ProspectAradial;
 use App\Models\User;
@@ -178,14 +179,13 @@ class MeetingController extends Controller {
 
     public function listMeetingEnd(Request $request) {
         $user = $request->user();
-        $meetings = match((int)$user->role_id){
-            1 => Meeting::with(['user', 'installationOrder'])
-            ->where('status', 'finalizada')->get(),
-            2, 3, 4 => Meeting::with(['user', 'installationOrder'])
-            ->where('franchise_id', $user->franchise_id)
-            ->where('status', 'finalizada')->get(),
-            default => null
-        };
+        $meetings = Meeting::with(['user', 'user.contractor', 'installationOrder', 'prospect_aradial'])
+            ->where('status', 'finalizada')
+            ->when($user->role_id != 1, fn($q) => $q->where('franchise_id', $user->franchise_id))
+            ->whereHas('prospect_aradial', function ($q) {
+            $q->where('status_red', 'Inactive'); // ← filtra inactivos
+    })
+    ->get();
         if (!$meetings) {
             return response()->json([
                 'message' => 'Unauthorized'
@@ -198,8 +198,8 @@ class MeetingController extends Controller {
         'contratista'     => $m->user->contractor->name ?? 'Sin contratista',
         'status'          => $m->status,
         'usuario_ppoe'    => $m->installationOrder->ppoe_user ?? '',
-        'password_ppoe'   => $m->installationOrder->ppoe_password ?? '',
-        'id_cita'         => $m->id,
+        'password_ppoe'   => $m->installationOrder->ppoe_password?? '',
+        'id_prospect'         => $m->prospect_aradial_id,
     ]);
 
         return response()->json([
@@ -267,17 +267,24 @@ class MeetingController extends Controller {
 
      public function getAllContractProspectMeeting($id)
     {
-        log::info("Consulting meetings for prospect: $id");
-        $meetings = Meeting::where('prospect_aradial_id' , $id)
+        $meetings = Meeting::with('user')
+        ->where('prospect_aradial_id' , $id)
         ->whereIn('status', ['asignada', 'no_asignada'])
-        ->get()->groupBy('nro_contract');
+        ->get();
         if($meetings->isEmpty()) {
             return response()->json([
-            'message' => 'Meeting no exist'
+            'message' => 'Meeting  do not exist'
         ], 404);
         }
 
-        $result = $meetings->map(fn($group) => $group->pluck('id'));
+        $result = $meetings->map(fn($m) => [
+            'nro_contract'    => $m->nro_contract,
+            'tecnico'         => $m->user->name ?? 'Sin técnico',
+            'contratista'     => $m->user->contractor->name ?? 'Sin contratista',
+            'status'          => $m->status,
+            'fechaHora'       => $m->date_time1,
+            'id_meeting'     => $m->id,
+        ]);
         return response()->json([
             'message' => 'Meeting retrieved successfully',
             'meetings' => $result

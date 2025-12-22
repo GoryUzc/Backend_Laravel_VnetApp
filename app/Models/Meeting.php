@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 use App\Models\User;
 use App\Models\ProspectAradial;
@@ -73,5 +74,10 @@ class Meeting extends Model {
     public function prospect_aradial(): BelongsTo
     {
         return $this->belongsTo(ProspectAradial::class, 'prospect_aradial_id');
+    }
+
+    public function installationOrder():HasOne
+    {
+        return $this->hasOne(InstallationOrder::class, 'id_meeting', 'id');
     }
 }

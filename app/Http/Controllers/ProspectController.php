@@ -217,7 +217,7 @@ class ProspectController extends Controller
             return response()->json([
                 'message' => 'Prospect status changed successfully',
                 'prospect' => $prospect
-            ], 200);
+            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Internal Server Error: ' . $e->getMessage()

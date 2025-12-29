@@ -67,7 +67,7 @@ class ContractorController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        if ($authUser->role_id == 1) { // Admin
+        if ($authUser->role_id == [1, 2]) { // Admin
             $contractors = Contractor::with('users')->get();
         } elseif ($authUser->role_id == 2) { // Supervisor
             $contractors = Contractor::with('users')

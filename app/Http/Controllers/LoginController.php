@@ -171,7 +171,7 @@ class LoginController extends Controller
     public function listRoleUser(){
         $roles = Role::select(
             'id', 'name')
-            -> whereIn('id', [3, 4])
+            -> whereIn('id')
             ->get(); 
             return response()->json([
                 'message' => 'Roles list retrived successfully',

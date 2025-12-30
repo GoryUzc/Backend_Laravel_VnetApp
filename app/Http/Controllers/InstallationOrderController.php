@@ -49,12 +49,14 @@ class InstallationOrderController extends Controller {
 
     // Aplicar filtros según el rol del usuario autenticado
     switch ((int) $user->role_id) {
-        case 1: // Admin → todas las órdenes
+        case 1: $query->where('status', 'finalizada');// Admin → todas las órdenes
             break;
 
         case 2: // Supervisor → órdenes de su franquicia
             $query->whereHas('user', function ($q) use ($user) {
                 $q->where('franchise_id', $user->franchise_id);
+            })->whereHas('meeting', function ($query) {
+            $query->where('status', 'finalizada');
             });
             break;
 

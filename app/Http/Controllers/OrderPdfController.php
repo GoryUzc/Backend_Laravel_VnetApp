@@ -25,7 +25,7 @@ class OrderPdfController extends Controller
             'isHtml5ParserEnabled' => true,
             'isPhpEnabled' => true,
         ])->loadView('pdf.order', compact('order'))
-        ->setPaper('a4');
+        ->setPaper('a4', 'landscape');
 
         // Devolver como descarga
         return $pdf->download("orden_instalacion_{$order->id}.pdf");
@@ -35,7 +35,7 @@ class OrderPdfController extends Controller
     {
         try {
             // Buscar la orden con la relación necesaria para la vista (una sola consulta)
-            $order = InstallationOrder::with('prospect_aradial')->findOrFail((int) $id);
+            $order = InstallationOrder::with('prospect_aradial', 'meeting', 'user')->findOrFail((int) $id);
 
             // Generar PDF para previsualización
             $pdf = Pdf::setOptions([

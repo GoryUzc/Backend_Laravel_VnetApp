@@ -36,6 +36,7 @@ class Meeting extends Model {
         'latitude',
         'longitude',
         'nro_contract',
+        'direcc_refe',
     
     ];
     /**

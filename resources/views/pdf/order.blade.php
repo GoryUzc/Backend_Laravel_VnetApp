@@ -241,16 +241,55 @@
         <td style="width: 10%;">{{ $order->prospect_aradial->name }}</td>
     </tr>
     <tr>
-        </td>
-        <td colspan="2" style="height: 45px; vertical-align: bottom; text-align: center;">
-            <div style="border-top: 1px solid #000; margin: 0 10px;">
+        <td colspan="2" style="height: 60px; vertical-align: bottom; text-align: center;">
+            <div style="border-top: 1px solid #000; margin: 0 10px; padding-top: 8px;">
                 <strong>Firma del Cliente</strong>
-                @if(isset($order->signature))
-                <div style="text-align: center;">
-                    <img src="{{ $order->signature }}" style="width: 150px; height: auto;">
-                    <p style="font-size: 6px; margin: 0;">Firma Digital del cliente</p>
-                </div>
-            @endif
+                
+                @php
+                    // Para PDFs necesitamos base64
+                    $signatureBase64 = null;
+                    
+                    if ($order->signature_path) {
+                        // Convertir ruta storage/ a ruta física
+                        $filePath = str_replace('storage/', 'app/public/', $order->signature_path);
+                        $fullPath = storage_path($filePath);
+                        // Resultado: /ruta/al/proyecto/storage/app/public/signatures/iyPwgL2Sli0tfCwbsmbBi0jhL0yLHMBNLRY5TncN.png
+                        
+                        if (file_exists($fullPath)) {
+                            $imageData = file_get_contents($fullPath);
+                            $signatureBase64 = 'data:image/png;base64,' . base64_encode($imageData);
+                        } else {
+                            // Si no existe en storage/app/public/, intentar en public/storage/
+                            $alternativePath = public_path(str_replace('storage/', 'storage/', $order->signature_path));
+                            if (file_exists($alternativePath)) {
+                                $imageData = file_get_contents($alternativePath);
+                                $signatureBase64 = 'data:image/png;base64,' . base64_encode($imageData);
+                            }
+                        }
+                    }
+                @endphp
+                
+                @if($signatureBase64)
+                    <div style="text-align: center; margin-top: 5px;">
+                        <img src="{{ $signatureBase64 }}" 
+                             style="width: 120px; height: auto; max-height: 35px; object-fit: contain;">
+                        <p style="font-size: 6px; margin: 2px 0 0 0; color: #666;">Firma Digital</p>
+                    </div>
+                @elseif($order->signature_path)
+                    <!-- Mostrar que existe pero no se pudo cargar -->
+                    <div style="text-align: center; margin-top: 5px; color: #666; font-size: 7px;">
+                        <div style="border: 1px solid #ddd; padding: 3px 8px; display: inline-block;">
+                            ✓ Firma registrada
+                        </div>
+                        <p style="font-size: 6px; margin: 2px 0 0 0;">
+                            Archivo: {{ basename($order->signature_path) }}
+                        </p>
+                    </div>
+                @else
+                    <div style="height: 35px; margin-top: 5px; color: #ccc; font-size: 7px;">
+                        <em>Espacio para firma del cliente</em>
+                    </div>
+                @endif
             </div>
         </td>
     </tr>

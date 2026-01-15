@@ -82,7 +82,7 @@ Route::prefix('/v1')->group(function () {
     Route::post('/orders/create', [InstallationOrderController::class, 'registerOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/orders/list', [InstallationOrderController::class, 'listOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/orders/pdf/{id}', [OrderPdfController::class, 'downloadPdf'])->middleware('jwt.auth');
-    Route::get('/orders/pdf/preview/{id}', [OrderPdfController::class, 'previewPdf'])->middleware('jwt.auth');
+    Route::get('/orders/pdf/preview/{id}', [OrderPdfController::class, 'previewPdf']); //->middleware('jwt.auth');
     Route::get('/orders/detail/{id}', [InstallationOrderController::class, 'detailOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::put('/orders/update/{id}', [InstallationOrderController::class, 'updateOrderInstallation'])->middleware('jwt.auth', 'checkrole:1,2,3,4');
     Route::get('/orders/user/installation/{id}', [InstallationOrderController::class, 'detailOrderUserInstallation']);   //->middleware('jwt.auth', 'checkrole:1,2,3,4');

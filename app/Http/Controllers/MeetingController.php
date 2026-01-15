@@ -565,6 +565,7 @@ private function SendEmailTakeMeeting($meeting, $assignedUser){
         'latitude' => 'required|numeric', 
         'longitude' => 'required|numeric',
         'nro_contract' => 'required|string',
+        'direcc_refe' => 'required|string',
         ]);
     }
 }

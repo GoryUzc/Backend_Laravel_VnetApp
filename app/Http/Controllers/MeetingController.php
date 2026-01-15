@@ -505,6 +505,7 @@ public function changeStatusMeetingClient (Request $request ,$id){
         'direccion' => $prospect->address ?? 'No especificada',
         'fechaHora' => $meeting->date_time1->format('d/m/Y \a \l\a\s H:i'),
         'contrato' => $meeting->nro_contract,
+        'observation' => $meeting->observation,
     ];
 
     Mail::send('email.meetingCanceled', $emailData, function ($message) use ($prospect) {

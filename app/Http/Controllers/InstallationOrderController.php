@@ -49,7 +49,7 @@ class InstallationOrderController extends Controller {
 
     // Aplicar filtros según el rol del usuario autenticado
     switch ((int) $user->role_id) {
-        case 1: $query->where('status', 'finalizada');// Admin → todas las órdenes
+        case 1: $query->whereHas('meeting', function ($q) { $q->where('status', 'finalizada'); });// Admin → todas las órdenes
             break;
 
         case 2: // Supervisor → órdenes de su franquicia
@@ -106,7 +106,7 @@ class InstallationOrderController extends Controller {
     public function detailOrderInstallation(Request $request, $id){
         try {
             $order = InstallationOrder::where('id', $id)->first();
-         if(empty($order)) {
+        if(empty($order)) {
             return response()->json([
             'order' => 'order no exist'
         ], 404);
@@ -212,14 +212,14 @@ public function uploadSignature(Request $request, $id)
         $order->update(['signature_path' => 'storage/' . $path]);
 
         // URL pública (opcional, si quieres devolverla)
-        $url = Storage::disk('public')->url($path);
+        $url = asset('storage/' . $path);
 
         return response()->json([
             'message' => 'Signature uploaded successfully',
             'signature_url' => $url,
         ], 200);
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         return response()->json([
             'error' => 'Internal Server Error: ' . $e->getMessage()
         ], 500);

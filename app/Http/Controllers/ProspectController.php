@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+// use function Termwind\parse;
 
 class ProspectController extends Controller
 {
@@ -307,7 +308,15 @@ public function consultProspectAradial(Request $request, $document)
         return Validator::make($request->all(), $rules);
     }
 
+
+    private function statusConvert (int $instStatus) {
+        $instStatus = (int)$instStatus;
+        return $instStatus === 0 ?  'Active' : 'Inactive';
+    }
+
     private function transformerAradialData($data, $type_document) {
+
+    $status = $this->statusConvert($data['contracts'][0]['status']);
         return [
             'aradial_id' => $data['id'] ?? null,
             'name' => $data['name'] ?? null,
@@ -320,7 +329,7 @@ public function consultProspectAradial(Request $request, $document)
             'email' => $data['email'] ?? null,
             'plan' => $data['contracts'][0]['services'][0]['package_name'] ?? null,
             'franchise_id' => $data['contracts'][0]['franchise_id'] ?? null,
-            'status_red' => $data['contracts'][0]['services'][0]['service_status'] ?? null,
+            'status_red' => $status ?? null,
         ];
     }
 

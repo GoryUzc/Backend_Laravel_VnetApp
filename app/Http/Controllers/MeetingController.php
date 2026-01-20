@@ -71,7 +71,7 @@ class MeetingController extends Controller {
             ], 400);
         }
         
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         return response()->json([
             'error' => 'Internal Server Error: ' . $e->getMessage()
         ], 500);

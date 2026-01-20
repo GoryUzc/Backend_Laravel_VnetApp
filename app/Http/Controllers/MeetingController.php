@@ -200,6 +200,7 @@ class MeetingController extends Controller {
         'usuario_ppoe'    => $m->installationOrder->ppoe_user ?? '',
         'password_ppoe'   => $m->installationOrder->ppoe_password?? '',
         'id_prospect'         => $m->prospect_aradial_id,
+        'name_cliente' => $m->prospect_aradial->name. '' . $m->prospect_aradial->last_name,
     ]);
 
         return response()->json([
